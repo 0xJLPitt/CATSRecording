@@ -5,6 +5,7 @@ from datetime import datetime
 from ultralytics import YOLO
 import torch
 import loop
+from app_config import CONFIG
 from subUI import ButtonClickApp
 import mediapipe as mp
 
@@ -40,8 +41,8 @@ class Recordingbackend():
         super(Recordingbackend, self).__init__()
         self.subui = ButtonClickApp
         self.vision_src = {}
-        self.struct = {'Deadlift': 5, 'Benchpress': 3, 'Squat': 6}
-        dir = 'C:/Users/92A27'
+        self.struct = CONFIG['cameras']
+        dir = os.path.expanduser('~')
         self.save_path = {'Deadlift': os.path.join(dir, 'MOCAP', 'recordings'),
                           'Benchpress': os.path.join(dir, 'benchpress', 'recordings'),
                           'Squat': os.path.join(dir, 'barbell_squat', 'recordings')}
@@ -219,7 +220,8 @@ class Recordingbackend():
         self.vision_src = {}                                            # 重置來源映射
         max_slots = self.struct[sport]                                  # 該運動最大插槽數
         try:
-            with open('./config/click_order.json', mode='r', encoding='utf-8') as file:  # 修正為 'r'
+            config_path = os.path.join(os.path.dirname(__file__), 'config', 'click_order.json')
+            with open(config_path, mode='r', encoding='utf-8-sig') as file:  # 修正為 'r'
                 data = json.load(file)                                  # 載入JSON
                 raw_list = data.get(sport, [])                          # 取對應運動的清單
         except Exception as e:
@@ -297,8 +299,8 @@ class Recordingbackend():
     def model_select(self, sport):
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         if sport == 'Deadlift':
-            bar_model = YOLO("./model/deadlift/yolo_bar_model/best.pt")
-            bone_model = YOLO("./model/deadlift/yolov8_model/yolov8n-pose.pt")
+            bar_model = YOLO("./model/squat/yolo_bar_model/best.pt")
+            bone_model = YOLO("./model/squat/yolov8_model/yolov8n-pose.pt")
             bar_model.to(device)
             bone_model.to(device)
             return [bar_model, bone_model]
@@ -333,22 +335,28 @@ class Recordingbackend():
             ret, frame = cap.get_frame()                                # 讀一幀影像
             if not ret:                                                 # 取幀失敗（USB 抖動/暫時無幀）
                 continue                                                # 跳過本輪避免 thread 中斷
+                
+            if i in CONFIG['rotate_180_cams']:                                        # 依設定檔反轉畫面
+                frame = cv2.rotate(frame, cv2.ROTATE_180)
+
 
             # ========================= Deadlift =========================
             if sport == 'Deadlift':                                     # 硬舉模式
                 if i == 0:                                              # 啟用序 0 → 槓視角（bar）
-                    start_time, frame_count, fps, out, frame_count_for_detect, self.save_sig_1, txt_file = loop.deadlift_bar_loop(
-                        i, frame, label, self.save_sig_1,               # 相機序/畫面/標籤/存檔旗標
-                        self.recording_sig,                             # UI 錄影 Gate
-                        self.folder, start_time, frame_count, fps, out, # I/O 與計時/輸出 writer
+                    start_time, frame_count, fps, out, original_out, frame_count_for_detect, self.save_sig_1, txt_file = loop.deadlift_bar_loop(
+                        i, frame, label, self.save_sig_1,               # 旗標
+                        self.recording_sig,                             # Gate
+                        self.folder, start_time, frame_count, fps,      # I/O
+                        out, original_out,                              # 疊圖/原始 writer
                         self.models[0],                                 # bar 模型固定用 models[0]
-                        txt_file, frame_count_for_detect, barrier       # txt/偵測幀/多機同步
+                        txt_file, frame_count_for_detect, barrier       # txt/偵測幀/同步
                     )
                 elif i == 1:                                            # 啟用序 1 → 骨架視角（bone）
-                    start_time, frame_count, fps, out, frame_count_for_detect, self.save_sig_2, txt_file = loop.deadlift_bone_loop(
+                    start_time, frame_count, fps, out, original_out, frame_count_for_detect, self.save_sig_2, txt_file = loop.deadlift_bone_loop(
                         i, frame, label, self.save_sig_2,               # 旗標
                         self.recording_sig,                             # Gate
-                        self.folder, start_time, frame_count, fps, out, # I/O
+                        self.folder, start_time, frame_count, fps,      # I/O
+                        out, original_out,                              # 疊圖/原始 writer
                         self.models[1],                                 # bone 模型固定用 models[1]
                         txt_file, frame_count_for_detect,               # txt/偵測幀
                         self.skeleton_connections, barrier              # 骨架連線/同步

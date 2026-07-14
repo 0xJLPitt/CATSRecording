@@ -56,18 +56,18 @@ class ButtonClickApp(QMainWindow):
 
     def save_to_json(self):
         # 將點擊順序寫入 JSON 文件
-        file_path = './config/click_order.json'
+        file_path = os.path.join(os.path.dirname(__file__), 'config', 'click_order.json')
         try:
             # 如果文件存在且不是空的，讀取現有數據
             if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
-                with open(file_path, mode='r', newline='', encoding='utf-8') as file:
+                with open(file_path, mode='r', newline='', encoding='utf-8-sig') as file:
                     existing_data = json.load(file)
             else:
                 existing_data = {}  # 如果文件不存在或為空，初始化為空字典
 
             # 更新或新增鍵
             existing_data[self.sport] = self.click_order
-            with open(file_path, mode='w', newline='', encoding='utf-8') as file:
+            with open(file_path, mode='w', newline='', encoding='utf-8-sig') as file:
                 json.dump(existing_data, file, indent=4, ensure_ascii=False)
             print(f"Click order saved to {file_path}")
         except Exception as e:

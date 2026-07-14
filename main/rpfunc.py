@@ -395,9 +395,8 @@ class Replaybackend():
     def Deadlift_btn_pressed(
         self, Deadlift_btn, Benchpress_btn, Squat_btn, Play_btn, icons,
         Stop_btn, Frameslider, fast_forward_combobox, File_comboBox, rp_tab, play_layout,
-        head_label, bottom_labels, graph, table
+        head_label, bottom_labels, graph
         ):
-        self.table = table
         self.currentsport = 'Deadlift'
         self.rp_Vision_labels = head_label + bottom_labels
         self.data_graph = graph
@@ -409,7 +408,7 @@ class Replaybackend():
     def Benchpress_btn_pressed(
         self, Deadlift_btn, Benchpress_btn, Squat_btn, Play_btn, icons,
         Stop_btn, Frameslider, fast_forward_combobox, File_comboBox, rp_tab, play_layout,
-        head_label, bottom_labels, V_sliders, H_sliders, graph, table
+        head_label, bottom_labels, V_sliders, H_sliders, graph
         ):
         self.currentsport = 'Benchpress'
         self.rp_Vision_labels = [head_label] + bottom_labels
@@ -441,21 +440,21 @@ class Replaybackend():
         ):    
                 
         if sport == 'Deadlift':
-            folderPath = 'C:/Users/92A27/MOCAP/recordings'
+            folderPath = 'C:/Users/User/MOCAP/recordings'
             self.folders[sport] = folderPath
             Deadlift_btn.setStyleSheet("font-size:18px;background-color: #888888")
             Benchpress_btn.setStyleSheet("font-size:18px;background-color: #666666")
             Squat_btn.setStyleSheet("font-size:18px;background-color: #666666")
         
         elif sport == 'Benchpress':
-            folderPath = 'C:/Users/92A27/benchpress/recordings'
+            folderPath = 'C:/Users/User/benchpress/recordings'
             self.folders[sport] = folderPath
             Benchpress_btn.setStyleSheet("font-size:18px;background-color: #888888")
             Squat_btn.setStyleSheet("font-size:18px;background-color: #666666")
             Deadlift_btn.setStyleSheet("font-size:18px;background-color: #666666")
 
         elif sport == 'Squat':
-            folderPath = 'C:/Users/92A27/barbell_squat/recordings'               # 指定 Squat 錄影資料夾
+            folderPath = 'C:/Users/User/barbell_squat/recordings'               # 指定 Squat 錄影資料夾
             self.folders[sport] = folderPath                                     # 記住資料夾
             Squat_btn.setStyleSheet("font-size:18px;background-color:#888888")   # ✅ 選中的應該是 Squat
             Benchpress_btn.setStyleSheet("font-size:18px;background-color:#666666") # 其他置灰
@@ -463,7 +462,11 @@ class Replaybackend():
 
 
         File_comboBox.clear()
-        self.all_items = os.listdir(self.folders[sport])
+        if os.path.exists(self.folders[sport]):
+            self.all_items = os.listdir(self.folders[sport])
+        else:
+            self.all_items = []
+            print(f"[Warning] Directory not found: {self.folders[sport]}")
         
         # 這裡combobox有變動
         for folder in self.all_items[::-1]:
@@ -493,13 +496,14 @@ class Replaybackend():
         # 依運動類型定義候選影片組（會按序挑到完整的三支）
         if self.currentsport == 'Squat':
             desired_groups = [
-                ('vision1_drawed.avi', 'vision5.avi', 'vision6.avi'),                # 優先原始命名
-                ('vision1.avi', 'vision5.avi', 'vision6.avi'),                         # 次選一般命名
-            ]                                                                          # ← 你原本多打一個孤立的 0，已移除
+                ('RL.avi', 'LU.avi', 'FL.avi'),
+                ("RR.avi", "FL.avi", "RD.avi")
+            ]
         elif self.currentsport == 'Deadlift':
             desired_groups = [
+                ('RL.avi', 'LU.avi', 'FL.avi'),
                 ('vision1_drawed.avi', 'vision2.avi', 'vision3.avi'),
-            ('vision1.avi', 'vision2.avi', 'vision3.avi'),
+                ('vision1.avi', 'vision2.avi', 'vision3.avi'),
             ]
         else:  # Benchpress
             desired_groups = [
@@ -1182,14 +1186,14 @@ class Replaybackend():
             table.setFixedSize(2500, 200)  # 固定表格尺寸
             
             canvas_proxy = graphicscene.addWidget(canvas)  # 將畫布加入場景
-            table_proxy = graphicscene.addWidget(table)  # 將表格加入場景
+            # table_proxy = graphicscene.addWidget(table)  # 隱藏表格不加入場景
 
             graphicview.setScene(graphicscene)  # 視圖設定場景
 
-            scene_width = graphicview.sceneRect().width()  # 取得場景寬度
-            table_x = (scene_width - table.width()) / 2  # 計算表格置中位置
-            table_proxy.setPos(table_x, 10)  # 設定表格位置
-            canvas_proxy.setPos(10, table.height() + 20)  # 設定畫布位置 (在表格下方)
+            # scene_width = graphicview.sceneRect().width()
+            # table_x = (scene_width - table.width()) / 2
+            # table_proxy.setPos(table_x, 10)
+            canvas_proxy.setPos(10, 10)  # 設定畫布位置至頂部
 
             sublayout.setWidget(1, QtWidgets.QFormLayout.FieldRole, graphicview)  # 將視圖加入主佈局
             sublayout.setFormAlignment(QtCore.Qt.AlignCenter)  # 設定佈局置中

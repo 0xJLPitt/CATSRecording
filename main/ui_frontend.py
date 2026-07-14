@@ -1,6 +1,7 @@
 from ui import Ui_MainWindow
 from rcfunc import Recordingbackend
 from rpfunc import Replaybackend
+from app_config import CONFIG
 from PyQt5 import QtCore, QtGui, QtWidgets
 import os, glob, sys
 
@@ -136,34 +137,34 @@ class Mainwindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # ▶️ Recording 按鈕
         self.recording_ctrl_btn = QtWidgets.QToolButton(self.ui.Recording_tab)
         self.recording_ctrl_btn.setIcon(self.icons[2])
-        self.recording_ctrl_btn.setIconSize(QtCore.QSize(140, 140))
-        self.recording_ctrl_btn.setFixedSize(180, 180)  # ✅ 可加這行
+        self.recording_ctrl_btn.setIconSize(QtCore.QSize(int(140 * CONFIG['ui_scale']), int(140 * CONFIG['ui_scale'])))
+        self.recording_ctrl_btn.setFixedSize(int(180 * CONFIG['ui_scale']), int(180 * CONFIG['ui_scale']))  # ✅ 可加這行
         self.ctrl_layout.addWidget(self.recording_ctrl_btn)
 
         self.auto_recording_btn = QtWidgets.QPushButton(self.ui.Recording_tab)
         self.auto_recording_btn.setText("AUTO RECORDING")
         self.auto_recording_btn.setEnabled(False)  
-        self.auto_recording_btn.setStyleSheet("font-size: 45px")
-        self.auto_recording_btn.setMinimumSize(500, 150)
+        self.auto_recording_btn.setStyleSheet(f"font-size: {int(44 * CONFIG['ui_scale'])}px")
+        self.auto_recording_btn.setMinimumSize(int(500 * CONFIG['ui_scale']), int(150 * CONFIG['ui_scale']))
         self.ctrl_layout.addWidget(self.auto_recording_btn)
 
         self.data_produce_btn = QtWidgets.QPushButton(self.ui.Recording_tab)
         self.data_produce_btn.setText("DATA PRODUCE")
-        self.data_produce_btn.setStyleSheet("font-size: 45px; color: yellow;")
-        self.data_produce_btn.setMinimumSize(500, 150)
+        self.data_produce_btn.setStyleSheet(f"font-size: {int(44 * CONFIG['ui_scale'])}px; color: yellow;")
+        self.data_produce_btn.setMinimumSize(int(500 * CONFIG['ui_scale']), int(150 * CONFIG['ui_scale']))
         self.ctrl_layout.addWidget(self.data_produce_btn)
 
         self.source_ctrl_btn = QtWidgets.QPushButton(self.ui.Recording_tab)
         self.source_ctrl_btn.setText("SOURCE CHANGE")
-        self.source_ctrl_btn.setStyleSheet("font-size: 45px; color: yellow;")
-        self.source_ctrl_btn.setMinimumSize(500, 150)
+        self.source_ctrl_btn.setStyleSheet(f"font-size: {int(44 * CONFIG['ui_scale'])}px; color: yellow;")
+        self.source_ctrl_btn.setMinimumSize(int(500 * CONFIG['ui_scale']), int(150 * CONFIG['ui_scale']))
         self.ctrl_layout.addWidget(self.source_ctrl_btn)
 
         # 🔙 Back 按鈕（順序正確）
         self.back_toolbtn = QtWidgets.QToolButton(self.ui.Recording_tab)
         self.back_toolbtn.setIcon(self.icons[4])
-        self.back_toolbtn.setIconSize(QtCore.QSize(140, 140))
-        self.back_toolbtn.setFixedSize(180, 180)
+        self.back_toolbtn.setIconSize(QtCore.QSize(int(140 * CONFIG['ui_scale']), int(140 * CONFIG['ui_scale'])))
+        self.back_toolbtn.setFixedSize(int(180 * CONFIG['ui_scale']), int(180 * CONFIG['ui_scale']))
         self.back_toolbtn.clicked.connect(self.back_toolbtn_clicked)
         self.ctrl_layout.addWidget(self.back_toolbtn)
 
@@ -179,7 +180,7 @@ class Mainwindow(QtWidgets.QMainWindow, Ui_MainWindow):
         #             text.setFocus(True)
         #             text.setAlignment(QtCore.Qt.AlignCenter)
         #             text.setText(f'Name {x+1}')
-        #             text.setStyleSheet("font-size:20px; color:yellow;")
+        #             text.setStyleSheet(f"font-size:{int(20 * CONFIG['ui_scale'])}px; color:yellow;")
         #             self.names.append(text)
         #             self.subject_layout.addWidget(text, y, x)    
         #         if y == 1:
@@ -193,7 +194,7 @@ class Mainwindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # self.ui.recording_layout.addLayout(self.subject_layout)
 
         labelsize = [480, 640]
-        self.rc_Vision_labels, self.rc_qpixmaps = self.rpbf.creat_vision_labels_pixmaps([x * 1.2 for x in labelsize], self.ui.Recording_tab, self.Deadlift_vision_layout, 'Deadlift', 5)
+        self.rc_Vision_labels, self.rc_qpixmaps = self.rpbf.creat_vision_labels_pixmaps([x * 0.8 for x in labelsize], self.ui.Recording_tab, self.Deadlift_vision_layout, 'Deadlift', CONFIG['cameras']['Deadlift'])
         self.data_produce_btn.clicked.connect(lambda: self.rcbf.data_produce_btn_clicked('Deadlift'))
         self.source_ctrl_btn.clicked.connect(lambda: self.rcbf.source_ctrl_btn_clicked('Deadlift', self.rc_Vision_labels))
         self.recording_ctrl_btn.clicked.connect(lambda: self.rcbf.recording_ctrl_btn_clicked('Deadlift', self.data_produce_btn, self.source_ctrl_btn, self.back_toolbtn))
@@ -215,35 +216,35 @@ class Mainwindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # ▶️ Recording 按鈕
         self.recording_ctrl_btn = QtWidgets.QToolButton(self.ui.Recording_tab)
         self.recording_ctrl_btn.setIcon(self.icons[2])
-        self.recording_ctrl_btn.setIconSize(QtCore.QSize(140, 140))
-        self.recording_ctrl_btn.setFixedSize(180, 180)  # ✅ 可加這行
+        self.recording_ctrl_btn.setIconSize(QtCore.QSize(int(140 * CONFIG['ui_scale']), int(140 * CONFIG['ui_scale'])))
+        self.recording_ctrl_btn.setFixedSize(int(180 * CONFIG['ui_scale']), int(180 * CONFIG['ui_scale']))  # ✅ 可加這行
         self.ctrl_layout.addWidget(self.recording_ctrl_btn)
         self.recording_ctrl_btn.setEnabled(False)  # ❌ 停用按鈕（灰階、無法點擊）
         
         self.auto_recording_btn = QtWidgets.QPushButton(self.ui.Recording_tab)
         self.auto_recording_btn.setText("AUTO RECORDING")
         self.auto_recording_btn.setEnabled(True)
-        self.auto_recording_btn.setStyleSheet("font-size: 45px")
-        self.auto_recording_btn.setMinimumSize(500, 150)
+        self.auto_recording_btn.setStyleSheet(f"font-size: {int(44 * CONFIG['ui_scale'])}px")
+        self.auto_recording_btn.setMinimumSize(int(500 * CONFIG['ui_scale']), int(150 * CONFIG['ui_scale']))
         self.ctrl_layout.addWidget(self.auto_recording_btn)
 
         self.data_produce_btn = QtWidgets.QPushButton(self.ui.Recording_tab)
         self.data_produce_btn.setText("DATA PRODUCE")
-        self.data_produce_btn.setStyleSheet("font-size: 45px; color: yellow;")
-        self.data_produce_btn.setMinimumSize(500, 150)
+        self.data_produce_btn.setStyleSheet(f"font-size: {int(44 * CONFIG['ui_scale'])}px; color: yellow;")
+        self.data_produce_btn.setMinimumSize(int(500 * CONFIG['ui_scale']), int(150 * CONFIG['ui_scale']))
         self.ctrl_layout.addWidget(self.data_produce_btn)
 
         self.source_ctrl_btn = QtWidgets.QPushButton(self.ui.Recording_tab)
         self.source_ctrl_btn.setText("SOURCE CHANGE")
-        self.source_ctrl_btn.setStyleSheet("font-size: 45px; color: yellow;")
-        self.source_ctrl_btn.setMinimumSize(500, 150)
+        self.source_ctrl_btn.setStyleSheet(f"font-size: {int(44 * CONFIG['ui_scale'])}px; color: yellow;")
+        self.source_ctrl_btn.setMinimumSize(int(500 * CONFIG['ui_scale']), int(150 * CONFIG['ui_scale']))
         self.ctrl_layout.addWidget(self.source_ctrl_btn)
 
         # 🔙 Back 按鈕（順序正確）
         self.back_toolbtn = QtWidgets.QToolButton(self.ui.Recording_tab)
         self.back_toolbtn.setIcon(self.icons[4])
-        self.back_toolbtn.setIconSize(QtCore.QSize(140, 140))
-        self.back_toolbtn.setFixedSize(180, 180)
+        self.back_toolbtn.setIconSize(QtCore.QSize(int(140 * CONFIG['ui_scale']), int(140 * CONFIG['ui_scale'])))
+        self.back_toolbtn.setFixedSize(int(180 * CONFIG['ui_scale']), int(180 * CONFIG['ui_scale']))
         self.back_toolbtn.clicked.connect(self.back_toolbtn_clicked)
         self.ctrl_layout.addWidget(self.back_toolbtn)
 
@@ -259,7 +260,7 @@ class Mainwindow(QtWidgets.QMainWindow, Ui_MainWindow):
         #             text.setFocus(True)
         #             text.setAlignment(QtCore.Qt.AlignCenter)
         #             text.setText(f'Name {x+1}')
-        #             text.setStyleSheet("font-size:20px; color:yellow;")
+        #             text.setStyleSheet(f"font-size:{int(20 * CONFIG['ui_scale'])}px; color:yellow;")
         #             self.names.append(text)
         #             self.subject_layout.addWidget(text, y, x)    
         #         if y == 1:
@@ -273,7 +274,7 @@ class Mainwindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # self.ui.recording_layout.addLayout(self.subject_layout)
 
         labelsize = [640, 480]
-        self.rc_Vision_labels, self.rc_qpixmaps = self.rpbf.creat_vision_labels_pixmaps([x * 1.5 for x in labelsize], self.ui.Recording_tab, self.Benchpress_vision_layout, 'Benchpress', 3)
+        self.rc_Vision_labels, self.rc_qpixmaps = self.rpbf.creat_vision_labels_pixmaps([x * 1.5 for x in labelsize], self.ui.Recording_tab, self.Benchpress_vision_layout, 'Benchpress', CONFIG['cameras']['Benchpress'])
         self.data_produce_btn.clicked.connect(lambda: self.rcbf.data_produce_btn_clicked('Benchpress'))
         self.source_ctrl_btn.clicked.connect(lambda: self.rcbf.source_ctrl_btn_clicked('Benchpress', self.rc_Vision_labels))
         # self.recording_ctrl_btn.clicked.connect(lambda: self.rcbf.recording_ctrl_btn_clicked('Benchpress', self.data_produce_btn, self.source_ctrl_btn, self.back_toolbtn))
@@ -290,7 +291,7 @@ class Mainwindow(QtWidgets.QMainWindow, Ui_MainWindow):
         ) # 自動錄影：切換 shared_state["auto_recording_sig"]  
 
 
-    def apply_big_yellow_button(widget, font_size=64):
+    def apply_big_yellow_button(widget, font_size=32):
         widget.setStyleSheet(f"font-size: {font_size}px; color: yellow;")
 
 
@@ -311,34 +312,34 @@ class Mainwindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # ▶️ Recording 按鈕
         self.recording_ctrl_btn = QtWidgets.QToolButton(self.ui.Recording_tab)
         self.recording_ctrl_btn.setIcon(self.icons[2])
-        self.recording_ctrl_btn.setIconSize(QtCore.QSize(140, 140))
-        self.recording_ctrl_btn.setFixedSize(180, 180)  # ✅ 可加這行
+        self.recording_ctrl_btn.setIconSize(QtCore.QSize(int(140 * CONFIG['ui_scale']), int(140 * CONFIG['ui_scale'])))
+        self.recording_ctrl_btn.setFixedSize(int(180 * CONFIG['ui_scale']), int(180 * CONFIG['ui_scale']))  # ✅ 可加這行
         self.ctrl_layout.addWidget(self.recording_ctrl_btn)
 
         self.auto_recording_btn = QtWidgets.QPushButton(self.ui.Recording_tab)
         self.auto_recording_btn.setText("AUTO RECORDING")
         self.auto_recording_btn.setEnabled(False)
-        self.auto_recording_btn.setStyleSheet("font-size: 45px")
-        self.auto_recording_btn.setMinimumSize(500, 150)
+        self.auto_recording_btn.setStyleSheet(f"font-size: {int(44 * CONFIG['ui_scale'])}px")
+        self.auto_recording_btn.setMinimumSize(int(500 * CONFIG['ui_scale']), int(150 * CONFIG['ui_scale']))
         self.ctrl_layout.addWidget(self.auto_recording_btn)
 
         self.data_produce_btn = QtWidgets.QPushButton(self.ui.Recording_tab)
         self.data_produce_btn.setText("DATA PRODUCE")
-        self.data_produce_btn.setStyleSheet("font-size: 45px; color: yellow;")
-        self.data_produce_btn.setMinimumSize(500, 150)
+        self.data_produce_btn.setStyleSheet(f"font-size: {int(44 * CONFIG['ui_scale'])}px; color: yellow;")
+        self.data_produce_btn.setMinimumSize(int(500 * CONFIG['ui_scale']), int(150 * CONFIG['ui_scale']))
         self.ctrl_layout.addWidget(self.data_produce_btn)
 
         self.source_ctrl_btn = QtWidgets.QPushButton(self.ui.Recording_tab)
         self.source_ctrl_btn.setText("SOURCE CHANGE")
-        self.source_ctrl_btn.setStyleSheet("font-size: 45px; color: yellow;")
-        self.source_ctrl_btn.setMinimumSize(500, 150)
+        self.source_ctrl_btn.setStyleSheet(f"font-size: {int(44 * CONFIG['ui_scale'])}px; color: yellow;")
+        self.source_ctrl_btn.setMinimumSize(int(500 * CONFIG['ui_scale']), int(150 * CONFIG['ui_scale']))
         self.ctrl_layout.addWidget(self.source_ctrl_btn)
 
         # 🔙 Back 按鈕（順序正確）
         self.back_toolbtn = QtWidgets.QToolButton(self.ui.Recording_tab)
         self.back_toolbtn.setIcon(self.icons[4])
-        self.back_toolbtn.setIconSize(QtCore.QSize(140, 140))
-        self.back_toolbtn.setFixedSize(180, 180)
+        self.back_toolbtn.setIconSize(QtCore.QSize(int(140 * CONFIG['ui_scale']), int(140 * CONFIG['ui_scale'])))
+        self.back_toolbtn.setFixedSize(int(180 * CONFIG['ui_scale']), int(180 * CONFIG['ui_scale']))
         self.back_toolbtn.clicked.connect(self.back_toolbtn_clicked)
         self.ctrl_layout.addWidget(self.back_toolbtn)
 
@@ -354,7 +355,7 @@ class Mainwindow(QtWidgets.QMainWindow, Ui_MainWindow):
         #             text.setFocus(True)
         #             text.setAlignment(QtCore.Qt.AlignCenter)
         #             text.setText(f'Name {x+1}')
-        #             text.setStyleSheet("font-size:20px; color:yellow;")
+        #             text.setStyleSheet(f"font-size:{int(20 * CONFIG['ui_scale'])}px; color:yellow;")
         #             self.names.append(text)
         #             self.subject_layout.addWidget(text, y, x)    
         #         if y == 1:
@@ -368,7 +369,7 @@ class Mainwindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # self.ui.recording_layout.addLayout(self.subject_layout)
 
         labelsize = [480, 640]
-        self.rc_Vision_labels, self.rc_qpixmaps = self.rpbf.creat_vision_labels_pixmaps([x * 1.2 for x in labelsize], self.ui.Recording_tab, self.Squat_vision_layout, 'Squat', 6)
+        self.rc_Vision_labels, self.rc_qpixmaps = self.rpbf.creat_vision_labels_pixmaps([x * 0.8 for x in labelsize], self.ui.Recording_tab, self.Squat_vision_layout, 'Squat', CONFIG['cameras']['Squat'])
         self.data_produce_btn.clicked.connect(lambda: self.rcbf.data_produce_btn_clicked('Squat'))
         self.source_ctrl_btn.clicked.connect(lambda: self.rcbf.source_ctrl_btn_clicked('Squat', self.rc_Vision_labels))
         self.recording_ctrl_btn.clicked.connect(lambda: self.rcbf.recording_ctrl_btn_clicked('Squat', self.data_produce_btn, self.source_ctrl_btn, self.back_toolbtn))
@@ -388,62 +389,62 @@ class Mainwindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if sport == 'Deadlift':
             label_size = [480, 640]
             # 左半邊labels
-            self.head_Vis_label, _ = self.rpbf.creat_vision_labels_pixmaps([x * 1.4 for x in label_size], self.ui.Replay_tab, self.ui.head_vis_layout, sport, 1)
-            self.bottom_Vis_labels, _ = self.rpbf.creat_vision_labels_pixmaps([x * 1.1 for x in label_size], self.ui.Replay_tab, self.ui.bottom_vis_layout, sport, 2)
+            self.head_Vis_label, _ = self.rpbf.creat_vision_labels_pixmaps([x * 0.6 for x in label_size], self.ui.Replay_tab, self.ui.head_vis_layout, sport, 1)
+            self.bottom_Vis_labels, _ = self.rpbf.creat_vision_labels_pixmaps([x * 0.5 for x in label_size], self.ui.Replay_tab, self.ui.bottom_vis_layout, sport, 2)
             
             # 右半邊graphic
             data_layout = QtWidgets.QFormLayout()
             self.data_layouts.append(data_layout)
-            graphicview, graphicscene, canvas, axes, table = self.rpbf.creat_graphic(self.ui.Replay_tab, data_layout, (27.5,16.5), 4)
+            graphicview, graphicscene, canvas, axes, table = self.rpbf.creat_graphic(self.ui.Replay_tab, data_layout, (9, 7), 4)
             self.graph = {'graphicview' : graphicview, 'graphicscene' : graphicscene, 'canvas' : canvas, 'axes' : axes}
             self.ui.data_ctrl_layout_V.addLayout(data_layout)
                 
-            self.ui.bottom_vis_layout.setSpacing(50)
+            self.ui.bottom_vis_layout.setSpacing(10)
             self.ui.bottom_vis_layout.setContentsMargins(0, 0, 10, 10)
         
             self.rpbf.Deadlift_btn_pressed(
                 self.ui.rp_Deadlift_btn, self.ui.rp_Benchpress_btn, self.ui.rp_Squat_btn, self.ui.Play_btn, self.icons, self.ui.Stop_btn, 
                 self.ui.Frameslider, self.ui.fast_forward_combobox, self.ui.File_comboBox, self.ui.Replay_tab, self.ui.play_layout,
-                self.head_Vis_label, self.bottom_Vis_labels, self.graph, table)
+                self.head_Vis_label, self.bottom_Vis_labels, self.graph)
             
         elif sport == 'Benchpress':
             label_size = [640, 480]
             # 左半邊labels
-            self.ui.head_vis_layout.setContentsMargins(230, 0, 250, 70)
-            self.head_Vis_label, vertical_slider, horizontal_slider = self.rpbf.creat_vision_labels_pixmaps([x * 1.5 for x in label_size], self.ui.Replay_tab, self.ui.head_vis_layout, sport, 1, type = 'rp')
-            self.bottom_Vis_labels, vertical_sliders, horizontal_sliders = self.rpbf.creat_vision_labels_pixmaps([x * 1 for x in label_size], self.ui.Replay_tab, self.ui.bottom_vis_layout, sport, 2, type = 'rp')
+            self.ui.head_vis_layout.setContentsMargins(0, 0, 0, 0)
+            self.head_Vis_label, vertical_slider, horizontal_slider = self.rpbf.creat_vision_labels_pixmaps([x * 0.8 for x in label_size], self.ui.Replay_tab, self.ui.head_vis_layout, sport, 1, type = 'rp')
+            self.bottom_Vis_labels, vertical_sliders, horizontal_sliders = self.rpbf.creat_vision_labels_pixmaps([x * 0.55 for x in label_size], self.ui.Replay_tab, self.ui.bottom_vis_layout, sport, 2, type = 'rp')
             self.V_sliders = vertical_sliders + [vertical_slider]
             self.H_sliders = horizontal_sliders + [horizontal_slider]
             
             # 右半邊labels
             data_layout = QtWidgets.QFormLayout()
             self.data_layouts.append(data_layout)
-            graphicview, graphicscene, canvas, axes, table = self.rpbf.creat_graphic(self.ui.Replay_tab, data_layout, (20, 15), 4)
+            graphicview, graphicscene, canvas, axes, table = self.rpbf.creat_graphic(self.ui.Replay_tab, data_layout, (9, 7), 4)
             self.graph = {'graphicview' : graphicview, 'graphicscene' : graphicscene, 'canvas' : canvas, 'axes' : axes}
             self.ui.data_ctrl_layout_V.addLayout(data_layout)
             
-            self.ui.bottom_vis_layout.setSpacing(50)
-            self.ui.bottom_vis_layout.setContentsMargins(0, 0, 10, 70)
+            self.ui.bottom_vis_layout.setSpacing(10)
+            self.ui.bottom_vis_layout.setContentsMargins(0, 0, 10, 10)
                 
             self.rpbf.Benchpress_btn_pressed(
                 self.ui.rp_Deadlift_btn, self.ui.rp_Benchpress_btn, self.ui.rp_Squat_btn, self.ui.Play_btn, self.icons, self.ui.Stop_btn, 
                 self.ui.Frameslider, self.ui.fast_forward_combobox, self.ui.File_comboBox, self.ui.Replay_tab, self.ui.play_layout,
-                self.head_Vis_label, self.bottom_Vis_labels, self.V_sliders, self.H_sliders, self.graph, table)
+                self.head_Vis_label, self.bottom_Vis_labels, self.V_sliders, self.H_sliders, self.graph)
             
         elif sport == 'Squat':
             label_size = [480, 640]
             # 左半邊labels
-            self.head_Vis_label, _ = self.rpbf.creat_vision_labels_pixmaps([x * 1.4 for x in label_size], self.ui.Replay_tab, self.ui.head_vis_layout, sport, 1)
-            self.bottom_Vis_labels, _ = self.rpbf.creat_vision_labels_pixmaps([x * 1.1 for x in label_size], self.ui.Replay_tab, self.ui.bottom_vis_layout, sport, 2)
+            self.head_Vis_label, _ = self.rpbf.creat_vision_labels_pixmaps([x * 0.6 for x in label_size], self.ui.Replay_tab, self.ui.head_vis_layout, sport, 1)
+            self.bottom_Vis_labels, _ = self.rpbf.creat_vision_labels_pixmaps([x * 0.5 for x in label_size], self.ui.Replay_tab, self.ui.bottom_vis_layout, sport, 2)
             
             # 右半邊graphic
             data_layout = QtWidgets.QFormLayout()
             self.data_layouts.append(data_layout)
-            graphicview, graphicscene, canvas, axes, table = self.rpbf.creat_graphic(self.ui.Replay_tab, data_layout, (27.5,16.5), 4)
+            graphicview, graphicscene, canvas, axes, table = self.rpbf.creat_graphic(self.ui.Replay_tab, data_layout, (9, 7), 4)
             self.graph = {'graphicview' : graphicview, 'graphicscene' : graphicscene, 'canvas' : canvas, 'axes' : axes}
             self.ui.data_ctrl_layout_V.addLayout(data_layout)
                 
-            self.ui.bottom_vis_layout.setSpacing(50)
+            self.ui.bottom_vis_layout.setSpacing(10)
             self.ui.bottom_vis_layout.setContentsMargins(0, 0, 10, 10)
         
             self.rpbf.Squat_btn_pressed(
@@ -466,13 +467,13 @@ class Mainwindow(QtWidgets.QMainWindow, Ui_MainWindow):
         btn.setText(text)
         btn.setStyleSheet("""
             QPushButton {
-                font-size: 48px;
+                font-size: 24px;
                 color: yellow;
                 border: 2px solid yellow;
                 font-family: 'Times New Roman';
             }
         """)
-        btn.setFixedSize(800, 120)
+        btn.setFixedSize(int(800 * CONFIG['ui_scale']), int(120 * CONFIG['ui_scale']))
         if callback:
             btn.clicked.connect(callback)
         return btn
