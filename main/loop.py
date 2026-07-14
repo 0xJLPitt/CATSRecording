@@ -589,9 +589,12 @@ def _end_and_move(folder, i, seg_no, tmp_paths, mapping):                       
         base_root = folder if _safe_folder(folder) else _final_root()                           # 目的根目錄  #
     except Exception:
         base_root = _final_root()                                                               # 防呆退回 _FINAL_BASE_DIR  #
-    # ==== 最終資料夾命名：recording_YYYYMMDD_HHMMSS（不加 seg 編號） ====
-    rec_folder = os.path.join(base_root, f"recording_{end_ts}")                                 # 最終錄影資料夾  #
-    os.makedirs(rec_folder, exist_ok=True)                                                      # 確保存在  #
+    # ==== 最終資料夾命名：避免重複產生 nested recording_ 資料夾 ====
+    if os.path.basename(base_root.rstrip(r"\/")).startswith("recording_"):
+        rec_folder = base_root
+    else:
+        rec_folder = os.path.join(base_root, f"recording_{end_ts}")                             # 最終錄影資料夾  #
+        os.makedirs(rec_folder, exist_ok=True)                                                  # 確保存在  #
     # ==== 逐檔搬移並改名 ====
     for k, new_name in mapping.items():                                                         # 逐檔搬移  #
         p = tmp_paths.get(k)                                                                    # 暫存檔路徑  #

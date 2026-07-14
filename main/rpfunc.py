@@ -1121,14 +1121,7 @@ class Replaybackend():
 
                     sublayout.addWidget(horizontal_slider, 1, 0)                                              # 水平 slider1 放影像下方  #
 
-                    # ---------- ★ 新增：第二個水平 slider，控制第2條垂直線 ----------
-                    horizontal_slider2 = QtWidgets.QSlider(orientation=QtCore.Qt.Horizontal, parent=parentlayout)  # ★ 第二條垂直線用的 slider  #
-                    horizontal_slider2.setFixedWidth(labelsize[0])                                           # ★ 寬度與影像一致  #
-                    horizontal_slider2.setValue(0)                                                           # ★ 初值 0  #
-                    horizontal_slider2.setMaximum(labelsize[0])                                              # ★ 最大值=影像寬  #
-                    horizontal_slider2.valueChanged.connect(Vision_label.set_vertical_line2)                 # ★ slider2 → 垂直線2（X）  #
-                    sublayout.addWidget(horizontal_slider2, 2, 0)                                            # ★ 放在第一個 slider 的下方  #
-                    # -------------------------------------------------------------
+
 
                     Vision_labels.append(Vision_label)                                                        # 收集 label  #
                     return Vision_label, vertical_slider, horizontal_slider                                   # 回傳（保持舊介面，避免動到其它呼叫點）  #
