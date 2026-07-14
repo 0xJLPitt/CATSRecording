@@ -627,6 +627,8 @@ def _latch_by_buffer(hit_cnt, miss_cnt, condition, buf_frames):                 
 
 def _debounce_three_gate(is_rec, gate_ui, gate_body, gate_bar,                              # 是否已在錄、三個 gate 當幀值
                          shared_state, shared_lock, gate3_cnt_key):                         # 共享狀態與計數 key
+    manual_rec = _shared_get(shared_state, shared_lock, "recording_sig", False)
+    if manual_rec: return True
     three_now = bool(gate_ui and gate_body and gate_bar)                                    # 本幀三 Gate 是否同時 True
     cnt = _shared_get(shared_state, shared_lock, gate3_cnt_key, 0)                          # 取連續命中計數
     cnt = cnt + 1 if three_now else 0                                                       # 命中 +1；任一掉則歸零
@@ -640,17 +642,23 @@ def _debounce_three_gate(is_rec, gate_ui, gate_body, gate_bar,                  
 
 def _idle_if_ui_off(gate_ui, label, frame, fps, barrier,
                     shared_state, shared_lock, cam_rec_key,
-                    io_tuple, counters_tuple):                                               # UI 關時統一收尾  # 用在三視角
-    # io_tuple = (out, original_out, txt_file)                                               # I/O 三件組
-    # counters_tuple = (save_sig, frame_count_for_detect)                                    # 計數雙件組
-    out, original_out, txt_file = io_tuple                                                    # 解包 I/O
-    save_sig, frame_count_for_detect = counters_tuple                                         # 解包計數
-    if not gate_ui:                                                                           # UI 未按錄影直接收
-        _close_io(out, original_out, txt_file)                                                # 關 I/O
-        _shared_set_many(shared_state, shared_lock, {cam_rec_key: False})                     # 標記不在錄
-        _qt_show(label, frame, fps)                                                           # 顯示
-        barrier.wait()                                                                        # 同步
-        return True, (None, None, None), (False, 0)                                           # 早退 + 重置回傳
+                    io_tuple, counters_tuple, folder, i, seg_no, mapping, tmp_paths_key):
+    out, original_out, txt_file = io_tuple
+    save_sig, frame_count_for_detect = counters_tuple
+    if not gate_ui:
+        is_rec = _shared_get(shared_state, shared_lock, cam_rec_key, False)
+        if is_rec:
+            _close_io(out, original_out, txt_file)
+            paths = _shared_get(shared_state, shared_lock, tmp_paths_key, {})
+            _shared_set_many(shared_state, shared_lock, {cam_rec_key: False, tmp_paths_key: {}})
+            _end_and_move(folder, i, seg_no, paths, mapping)
+        else:
+            _close_io(out, original_out, txt_file)
+            _shared_set_many(shared_state, shared_lock, {cam_rec_key: False})
+        
+        _qt_show(label, frame, fps)
+        barrier.wait()
+        return True, (None, None, None), (False, 0)
     return False, io_tuple, counters_tuple                                                    # 繼續 + 原封不動
 
 def _segment_start_if_needed(should_record, is_rec, folder, i, seg_no,
@@ -706,16 +714,17 @@ def benchpress_bar_loop(i, frame, label, save_sig, folder,                      
 
     # -------- 狀態讀取 --------
     # benchpress_bar_loop 內的 UI gate 讀取
-    gate_ui   = _shared_get(shared_state, shared_lock, "auto_recording_sig", False)           # UI Gate 改讀 auto_recording_sig
+    gate_ui   = _shared_get(shared_state, shared_lock, "auto_recording_sig", False) or _shared_get(shared_state, shared_lock, "recording_sig", False)
     is_rec    = _shared_get(shared_state, shared_lock, cam_rec_key, False)                    # 是否在錄  # 說明
     seg_no    = _shared_get(shared_state, shared_lock, cam_seg_key, 0)                        # 段號  # 說明
     end_false_cnt = _shared_get(shared_state, shared_lock, end_false_key, 0)                  # False 緩衝幀  # 說明
 
     # -------- UI 未啟動 → 早退 --------
     early, (out, original_out, txt_file), (save_sig, frame_count_for_detect) = \
-        _idle_if_ui_off(gate_ui, label, frame, fps, barrier,                                  # UI 關就收尾  # 說明
+        _idle_if_ui_off(gate_ui, label, frame, fps, barrier,
                         shared_state, shared_lock, cam_rec_key,
-                        (out, original_out, txt_file), (save_sig, frame_count_for_detect))
+                        (out, original_out, txt_file), (save_sig, frame_count_for_detect),
+                        folder, i, seg_no, {"o": "original_bar.avi", "v": "bar.avi", "t": "yolo_coordinates.txt"}, tmp_paths_key)
     if early:                                                                                 # 若早退  # 說明
         return start_time, frame_count, fps, out, frame_count_for_detect, original_out, save_sig, txt_file  # 回傳  # 說明
 
@@ -726,11 +735,15 @@ def benchpress_bar_loop(i, frame, label, save_sig, folder,                      
         original_frame = frame                                                                # 退化保護  # 說明
 
     # -------- YOLO 推論 + 疊圖 --------
-    try:
-        results = model.predict(source=frame, imgsz=320, conf=0.5, verbose=False)             # YOLO 推論  # 說明
-    except Exception as e:
-        results = []                                                                          # 失敗視為無偵測  # 說明
-        print(f"[benchpress_bar_loop] model error: {e}")                                      # 紀錄錯誤  # 說明
+    manual_rec = _shared_get(shared_state, shared_lock, "recording_sig", False)
+    if manual_rec:
+        results = []
+    else:
+        try:
+            results = model.predict(source=frame, imgsz=320, conf=0.5, verbose=False)
+        except Exception as e:
+            results = []
+            print(f"[benchpress_bar_loop] model error: {e}")
 
     xywh = _yolo_first_box_xywh(results)                                                      # 取第一個框中心 xywh  # 說明
     for r in results:
@@ -742,7 +755,8 @@ def benchpress_bar_loop(i, frame, label, save_sig, folder,                      
     # -------- 小框設定（只在框內判定位移） --------
     GATE_X1, GATE_X2 = 420, 500                                                               # 觸發區 X 範圍  # 說明
     GATE_Y1, GATE_Y2 = 140, 285  #160 225                                                     # 觸發區 Y 範圍  # 說明
-    cv2.rectangle(frame, (GATE_X1, GATE_Y1), (GATE_X2, GATE_Y2), (0, 0, 255), 2)              # 畫紅框供校對  # 說明
+    if not manual_rec:
+        cv2.rectangle(frame, (GATE_X1, GATE_Y1), (GATE_X2, GATE_Y2), (0, 0, 255), 2)              # 畫紅框供校對  # 說明
 
     # -------- session 狀態（出槓一路錄；回框穩定停住才關） --------
     session_key   = "bar_session_active"                                                      # 出槓鎖存（一路錄）  # 說明
@@ -801,8 +815,9 @@ def benchpress_bar_loop(i, frame, label, save_sig, folder,                      
     else:
         in_gate = False                                                                       # 視為在框外  # 說明
         bar_loss = min(BAR_LOSS_TOL_FRAMES+1, bar_loss + 1)                                   # 遺失累計  # 說明
-        cv2.putText(frame, "OUT", (GATE_X1, GATE_Y1-8),                                       # 標示 OUT  # 說明
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,0,255), 2, cv2.LINE_AA)
+        if not manual_rec:
+            cv2.putText(frame, "OUT", (GATE_X1, GATE_Y1-8),                                       # 標示 OUT  # 說明
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,0,255), 2, cv2.LINE_AA)
 
     # -------- 回寫 bar 狀態（供其他視角/三 Gate 使用） --------
     _shared_set_many(shared_state, shared_lock, {
@@ -858,7 +873,7 @@ def benchpress_bar_loop(i, frame, label, save_sig, folder,                      
             out, original_out, txt_file,
             shared_state, shared_lock, tmp_paths_key, cam_rec_key,
             folder, i, seg_no,
-            mapping={"o": "original_vision1.avi", "v": "vision1.avi", "t": "yolo_coordinates.txt"},  # 搬檔命名  # 說明
+            mapping={"o": "original_bar.avi", "v": "bar.avi", "t": "yolo_coordinates.txt"},  # 搬檔命名  # 說明
             end_false_key=end_false_key,                                                      # 必帶  # 說明
             reset_frame_counter=True)                                                         # 關段後可歸零  # 說明
         if ended:                                                                             # 若關段  # 說明
@@ -906,7 +921,7 @@ def benchpress_body_loop(i, frame, label, save_sig, folder,                     
     start_time, frame_count, fps = _update_fps(start_time, frame_count, fps)                  # 刷新 FPS 計算  # 說明
 
     # ---- 讀共享狀態 ----
-    gate_ui   = _shared_get(shared_state, shared_lock, "auto_recording_sig", False)           # UI Gate 改讀 auto_recording_sig
+    gate_ui   = _shared_get(shared_state, shared_lock, "auto_recording_sig", False) or _shared_get(shared_state, shared_lock, "recording_sig", False)
     is_rec    = _shared_get(shared_state, shared_lock, cam_rec_key, False)                    # 是否在錄影中  # 說明
     seg_no    = _shared_get(shared_state, shared_lock, cam_seg_key, 0)                        # 當前段號  # 說明
     end_false_cnt = _shared_get(shared_state, shared_lock, end_false_key, 0)                  # 關段緩衝幀數  # 說明
@@ -916,9 +931,10 @@ def benchpress_body_loop(i, frame, label, save_sig, folder,                     
 
     # ---- UI 未開啟時的早退收尾 ----
     early, (out, _unused_original, txt_file), (save_sig, frame_count_for_detect) = \
-        _idle_if_ui_off(gate_ui, label, frame, fps, barrier,                                  # 呼叫保護：UI 關就早退  # 說明
+        _idle_if_ui_off(gate_ui, label, frame, fps, barrier,
                         shared_state, shared_lock, cam_rec_key,
-                        (out, None, txt_file), (save_sig, frame_count_for_detect))
+                        (out, original_out, txt_file), (save_sig, frame_count_for_detect),
+                        folder, i, seg_no, {"o":"original_rear.avi","v":"rear.avi","t":"yolo_skeleton_top.txt"}, tmp_paths_key)
     if early:                                                                                 # 若早退  # 說明
         return start_time, frame_count, fps, out, frame_count_for_detect, save_sig, txt_file  # 直接回傳結束  # 說明
 
@@ -933,16 +949,20 @@ def benchpress_body_loop(i, frame, label, save_sig, folder,                     
     H, W = frame.shape[:2]                                                                    # 取得畫面大小  # 說明
     rx1, ry1 = int(W*ROI_X1_RATE), int(H*ROI_Y1_RATE)                                         # ROI 左上 px  # 說明
     rx2, ry2 = int(W*ROI_X2_RATE), int(H*ROI_Y2_RATE)                                         # ROI 右下 px  # 說明
-    if DRAW_ROI:                                                                              # 是否畫 ROI 框  # 說明
+    manual_rec = _shared_get(shared_state, shared_lock, "recording_sig", False)
+    if DRAW_ROI and not manual_rec:                                                                              # 是否畫 ROI 框  # 說明
         cv2.rectangle(frame, (rx1, ry1), (rx2, ry2), (0, 255, 255), 2)                        # 在顯示層畫黃框  # 說明
 
     # ================== 核心改動：裁切 ROI → 推論 → 加回偏移 ==================
-    roi_img = original_frame[ry1:ry2, rx1:rx2].copy()                                         # 直接裁切 ROI 影像  # 說明
-    try:
-        results = list(model(source=roi_img, stream=True, verbose=False))                     # 只在 ROI 圖上跑 YOLO（較快且乾淨）  # 說明
-    except Exception as e:
-        results = []                                                                          # 發生錯誤視為無偵測  # 說明
-        print(f"[benchpress_body_loop] model error: {e}")                                     # 列印錯誤  # 說明
+    roi_img = original_frame[ry1:ry2, rx1:rx2].copy()
+    if manual_rec:
+        results = []
+    else:
+        try:
+            results = list(model(source=roi_img, stream=True, verbose=False))
+        except Exception as e:
+            results = []
+            print(f"[benchpress_body_loop] model error: {e}")
 
     # ---- 小工具：轉 numpy 與加偏移 ----
     def _to_numpy(x):                                                                         # 將 tensor 轉 numpy  # 說明
@@ -1090,7 +1110,7 @@ def benchpress_body_loop(i, frame, label, save_sig, folder,                     
             out, original_out, txt_file,
             shared_state, shared_lock, tmp_paths_key, cam_rec_key,
             folder, i, seg_no,
-            mapping={"o":"original_vision2.avi","v":"vision2.avi","t":"yolo_skeleton_top.txt"},   # 關段時檔名對應  # 說明
+            mapping={"o":"original_rear.avi","v":"rear.avi","t":"yolo_skeleton_top.txt"},   # 關段時檔名對應  # 說明
             end_false_key=end_false_key,
             reset_frame_counter=True)                                                         # 關段後幀數歸零  # 說明
         if ended:                                                                             # 已關段  # 說明
@@ -1130,7 +1150,7 @@ def benchpress_head_loop(i, frame, label, save_sig, folder,                     
 
     # ---- 三 Gate 讀取 --------------------------------------------------------------
     gate3_cnt_key = f"gate3_true_cnt_cam{i}"                                                    # 三 Gate 連續命中計數 key
-    gate_ui   = _shared_get(shared_state, shared_lock, "auto_recording_sig", False)           # UI Gate 改讀 auto_recording_sig
+    gate_ui   = _shared_get(shared_state, shared_lock, "auto_recording_sig", False) or _shared_get(shared_state, shared_lock, "recording_sig", False)
     gate_body = _shared_get(shared_state, shared_lock, "body_detected", False)                  # 人體 gate
     gate_bar  = _shared_get(shared_state, shared_lock, "bar_y_changed", False)                  # 槓 gate
     should_record = _debounce_three_gate(                                                       # 呼叫共用防抖函式
@@ -1140,9 +1160,10 @@ def benchpress_head_loop(i, frame, label, save_sig, folder,                     
 
     # ---- UI 未啟動：統一早退 ------------------------------------------------------
     early, (out, original_out, _), (save_sig, frame_count_for_detect) = \
-        _idle_if_ui_off(gate_ui, label, frame, fps, barrier,                                # 共用：UI 關就收尾與顯示
+        _idle_if_ui_off(gate_ui, label, frame, fps, barrier,
                         shared_state, shared_lock, cam_rec_key,
-                        (out, original_out, None), (save_sig, frame_count_for_detect))
+                        (out, original_out, None), (save_sig, frame_count_for_detect),
+                        folder, i, seg_no, {"o": "original_top.avi", "v": "top.avi"}, tmp_paths_key)
     if early:                                                                                # 若已早退
         return start_time, frame_count, fps, out, original_out, save_sig, frame_count_for_detect  # 回傳
 
@@ -1168,7 +1189,7 @@ def benchpress_head_loop(i, frame, label, save_sig, folder,                     
             out, original_out, None,
             shared_state, shared_lock, tmp_paths_key, cam_rec_key,
             folder, i, seg_no,
-            mapping={"o": "original_vision3.avi", "v": "vision3.avi"},                       # Head 檔名規則
+            mapping={"o": "original_top.avi", "v": "top.avi"},                       # Head 檔名規則
             end_false_key=end_false_key,
             reset_frame_counter=True)
         if ended:                                                                            # 若已關段

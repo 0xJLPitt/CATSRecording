@@ -55,6 +55,7 @@ class Mainwindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.ui.Frameslider.valueChanged.connect(lambda: self.rpbf.slider_changed(self.ui.Frameslider, self.ui.Play_btn, self.icons))
         self.ui.search_LineEdit.textChanged.connect(lambda: self.rpbf.search_text_changed(self.ui.File_comboBox, self.ui.search_LineEdit.text()))
         self.ui.data_produce_btn_rp.clicked.connect(lambda: self.rpbf.data_produce_btn_clicked_rp(self.rpbf.currentsport))
+        self.ui.replay_layout.addLayout(self.ui.bottom_controls_layout)
 
     def tab_changed(self, index):
         if index == 0:
@@ -64,8 +65,6 @@ class Mainwindow(QtWidgets.QMainWindow, Ui_MainWindow):
             if self.data_layouts:
                 for layout in self.data_layouts:
                     self.layout_clear(layout)
-            if self.ui.bottom_controls_layout in [self.ui.data_ctrl_layout_V.itemAt(i).layout() for i in range(self.ui.data_ctrl_layout_V.count())]:
-                self.ui.data_ctrl_layout_V.removeItem(self.ui.bottom_controls_layout)
             self.data_layouts = []
             self.rpbf.tab_changed()
 
@@ -219,7 +218,7 @@ class Mainwindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.recording_ctrl_btn.setIconSize(QtCore.QSize(int(140 * CONFIG['ui_scale']), int(140 * CONFIG['ui_scale'])))
         self.recording_ctrl_btn.setFixedSize(int(180 * CONFIG['ui_scale']), int(180 * CONFIG['ui_scale']))  # ✅ 可加這行
         self.ctrl_layout.addWidget(self.recording_ctrl_btn)
-        self.recording_ctrl_btn.setEnabled(False)  # ❌ 停用按鈕（灰階、無法點擊）
+        self.recording_ctrl_btn.setEnabled(True)  # ✅ 啟用按鈕
         
         self.auto_recording_btn = QtWidgets.QPushButton(self.ui.Recording_tab)
         self.auto_recording_btn.setText("AUTO RECORDING")
@@ -274,7 +273,7 @@ class Mainwindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # self.ui.recording_layout.addLayout(self.subject_layout)
 
         labelsize = [640, 480]
-        self.rc_Vision_labels, self.rc_qpixmaps = self.rpbf.creat_vision_labels_pixmaps([x * 1.5 for x in labelsize], self.ui.Recording_tab, self.Benchpress_vision_layout, 'Benchpress', CONFIG['cameras']['Benchpress'])
+        self.rc_Vision_labels, self.rc_qpixmaps = self.rpbf.creat_vision_labels_pixmaps([x * 0.75 for x in labelsize], self.ui.Recording_tab, self.Benchpress_vision_layout, 'Benchpress', CONFIG['cameras']['Benchpress'])
         self.data_produce_btn.clicked.connect(lambda: self.rcbf.data_produce_btn_clicked('Benchpress'))
         self.source_ctrl_btn.clicked.connect(lambda: self.rcbf.source_ctrl_btn_clicked('Benchpress', self.rc_Vision_labels))
         # self.recording_ctrl_btn.clicked.connect(lambda: self.rcbf.recording_ctrl_btn_clicked('Benchpress', self.data_produce_btn, self.source_ctrl_btn, self.back_toolbtn))
@@ -384,8 +383,6 @@ class Mainwindow(QtWidgets.QMainWindow, Ui_MainWindow):
             for layout in self.data_layouts:
                 self.layout_clear(layout)
         self.data_layouts = []
-        if self.ui.bottom_controls_layout in [self.ui.data_ctrl_layout_V.itemAt(i).layout() for i in range(self.ui.data_ctrl_layout_V.count())]:
-            self.ui.data_ctrl_layout_V.removeItem(self.ui.bottom_controls_layout)
         if sport == 'Deadlift':
             label_size = [480, 640]
             # 左半邊labels
@@ -433,26 +430,20 @@ class Mainwindow(QtWidgets.QMainWindow, Ui_MainWindow):
             
         elif sport == 'Squat':
             label_size = [480, 640]
-            # 左半邊labels
-            self.head_Vis_label, _ = self.rpbf.creat_vision_labels_pixmaps([x * 0.6 for x in label_size], self.ui.Replay_tab, self.ui.head_vis_layout, sport, 1)
-            self.bottom_Vis_labels, _ = self.rpbf.creat_vision_labels_pixmaps([x * 0.5 for x in label_size], self.ui.Replay_tab, self.ui.bottom_vis_layout, sport, 2)
+            # 影片攤平成三個平行
+            self.head_Vis_label, self.V_sliders, self.H_sliders, _ = self.rpbf.creat_vision_labels_pixmaps([x * 0.95 for x in label_size], self.ui.Replay_tab, self.ui.head_vis_layout, sport, 3)
+            self.bottom_Vis_labels = []
             
-            # 右半邊graphic
-            data_layout = QtWidgets.QFormLayout()
-            self.data_layouts.append(data_layout)
-            graphicview, graphicscene, canvas, axes, table = self.rpbf.creat_graphic(self.ui.Replay_tab, data_layout, (9, 7), 4)
-            self.graph = {'graphicview' : graphicview, 'graphicscene' : graphicscene, 'canvas' : canvas, 'axes' : axes}
-            self.ui.data_ctrl_layout_V.addLayout(data_layout)
+            # 移除右側的資料曲線圖
+            self.graph = None
                 
-            self.ui.bottom_vis_layout.setSpacing(10)
-            self.ui.bottom_vis_layout.setContentsMargins(0, 0, 10, 10)
+            self.ui.head_vis_layout.setSpacing(60)
+            self.ui.head_vis_layout.setContentsMargins(10, 0, 10, 0)
         
             self.rpbf.Squat_btn_pressed(
                 self.ui.rp_Deadlift_btn, self.ui.rp_Benchpress_btn, self.ui.rp_Squat_btn, self.ui.Play_btn, self.icons, self.ui.Stop_btn, 
                 self.ui.Frameslider, self.ui.fast_forward_combobox, self.ui.File_comboBox, self.ui.Replay_tab, self.ui.play_layout,
                 self.head_Vis_label, self.bottom_Vis_labels, self.graph)
-
-        self.ui.data_ctrl_layout_V.addLayout(self.ui.bottom_controls_layout)
             
             
     def layout_clear(self, layout):

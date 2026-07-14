@@ -507,6 +507,7 @@ class Replaybackend():
             ]
         else:  # Benchpress
             desired_groups = [
+                ('original_bar.avi', 'original_rear.avi', 'original_top.avi'),
                 ('vision1_drawed.avi', 'original_vision2.avi', 'vision3.avi'),
                 ('original_vision1.avi', 'original_vision2.avi', 'vision3.avi'),
             ]
@@ -609,8 +610,8 @@ class Replaybackend():
                     thread_play.start()                                                           # 啟動
                     self.threads.append(thread_play)                                              # 收執行緒
 
-                # 建立資料曲線 threads（只有在 self.datas / info_data 有內容時）
-                if getattr(self, "datas", False) and info_count > 0:                              # 有資料才跑
+                # 建立資料曲線 threads（只有在 self.datas / info_data 有內容時且有圖表時）
+                if getattr(self, "datas", False) and info_count > 0 and getattr(self, "data_graph", None) is not None:                              # 有資料且有圖表才跑
                     for i, data in enumerate(self.info_data):                                     # 逐筆資料
                         data_thread = Thread_data(
                             i, self.data_graph, data, self.barrier_data,
@@ -674,9 +675,7 @@ class Replaybackend():
         event.accept()
         
     def showprevision(self):
-            # 1. 檢查圖表物件是否初始化
-            if not hasattr(self, "data_graph") or self.data_graph.get("axes") is None:  # 若無圖表物件
-                return  # 直接結束
+            has_graph = hasattr(self, "data_graph") and getattr(self, "data_graph", None) is not None and self.data_graph.get("axes") is not None
 
             # 2. 讀取資料與路徑
             sport  = getattr(self, "currentsport", "") or ""  # 取得當前運動類型
@@ -700,6 +699,9 @@ class Replaybackend():
                                                                 QtCore.Qt.IgnoreAspectRatio)  # 縮放至 Label 大小
                             self.rp_Vision_labels[i].setPixmap(scaled)  # 顯示圖片
                     temp_cap.release()  # 釋放影片資源
+
+            if not has_graph:
+                return
 
             # 4. 準備繪圖：清空舊圖
             axes = self.data_graph['axes']  # 取得所有子圖 (Axes)
@@ -1018,19 +1020,59 @@ class Replaybackend():
             return Vision_labels, qpixmaps
 
         if sport == 'Squat':
-            for _ in range(num):
+            vertical_sliders = []
+            horizontal_sliders = []
+            for i in range(num):
                 qpixmap = QtGui.QPixmap()
                 qpixmaps.append(qpixmap)
-                Vision_label = QtWidgets.QLabel(parentlayout)
-                Vision_label.setFrameShape(QtWidgets.QFrame.Panel)
+                
+                Vision_label = LineLabel(parentlayout)
                 Vision_label.setMinimumSize(labelsize[0], labelsize[1])
                 Vision_label.setMaximumSize(labelsize[0], labelsize[1])
                 Vision_label.setPixmap(qpixmap)
-                Vision_label.setText('')
-                sublayout.addWidget(Vision_label)
-                sublayout.setAlignment(Vision_label, QtCore.Qt.AlignCenter)
+
+                vertical_slider = QtWidgets.QSlider(QtCore.Qt.Vertical, parent=parentlayout)
+                horizontal_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal, parent=parentlayout)
+                
+                slider_style = '''
+                    QSlider::groove:vertical { background: #444444; width: 8px; border-radius: 4px; }
+                    QSlider::handle:vertical { background: red; height: 16px; margin: 0 -4px; border-radius: 8px; }
+                    QSlider::groove:horizontal { background: #444444; height: 8px; border-radius: 4px; }
+                    QSlider::handle:horizontal { background: red; width: 16px; margin: -4px 0; border-radius: 8px; }
+                '''
+                vertical_slider.setStyleSheet(slider_style)
+                horizontal_slider.setStyleSheet(slider_style)
+
+                vertical_slider.setFixedHeight(labelsize[1])
+                vertical_slider.setMaximum(labelsize[1])
+                vertical_slider.setInvertedAppearance(True)
+                vertical_slider.setValue(0)
+                vertical_slider.valueChanged.connect(Vision_label.set_horizontal_line)
+                
+                horizontal_slider.setFixedWidth(labelsize[0])
+                horizontal_slider.setMaximum(labelsize[0])
+                horizontal_slider.setValue(0)
+                horizontal_slider.valueChanged.connect(Vision_label.set_vertical_line)
+
+                vis_layout = QtWidgets.QGridLayout()
+                vis_layout.setContentsMargins(0, 0, 0, 0)
+                vis_layout.setSpacing(5)
+                vis_layout.addWidget(Vision_label, 0, 0)
+                vis_layout.addWidget(vertical_slider, 0, 1)
+                vis_layout.addWidget(horizontal_slider, 1, 0, 1, 2)
+
+                temp_widget = QtWidgets.QWidget()
+                temp_widget.setLayout(vis_layout)
+
+                if isinstance(sublayout, QtWidgets.QGridLayout):
+                    sublayout.addWidget(temp_widget, 0, i)
+                else:
+                    sublayout.addWidget(temp_widget)
+                sublayout.setAlignment(temp_widget, QtCore.Qt.AlignCenter)
                 Vision_labels.append(Vision_label)
-            return Vision_labels, qpixmaps
+                vertical_sliders.append(vertical_slider)
+                horizontal_sliders.append(horizontal_slider)
+            return Vision_labels, vertical_sliders, horizontal_sliders, qpixmaps
         
         if sport == 'Benchpress':
             if type == 'rc':
@@ -1039,8 +1081,8 @@ class Replaybackend():
                     qpixmaps.append(qpixmap)                                                                  # 收集 pixmap
                     Vision_label = QtWidgets.QLabel(parentlayout)                                             # 影像顯示 QLabel
                     Vision_label.setFrameShape(QtWidgets.QFrame.Panel)                                        # 外框樣式
-                    Vision_label.setMinimumSize(labelsize[0], labelsize[1])                                   # 固定大小（寬, 高）
-                    Vision_label.setMaximumSize(labelsize[0], labelsize[1])                                   # 固定大小（寬, 高）
+                    Vision_label.setMinimumSize(int(labelsize[0]), int(labelsize[1]))                                   # 固定大小（寬, 高）
+                    Vision_label.setMaximumSize(int(labelsize[0]), int(labelsize[1]))                                   # 固定大小（寬, 高）
                     Vision_label.setPixmap(qpixmap)                                                           # 指定 pixmap
                     Vision_label.setText('')                                                                  # 清空文字
                     sublayout.addWidget(Vision_label)                                                         # 佈局加入
