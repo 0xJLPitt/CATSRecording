@@ -20,7 +20,7 @@ def get_config():
             "ui_scale": 0.5,
             "cameras": {"Squat": 3, "Deadlift": 3, "Benchpress": 3},
             "squat_video_names": ["LU.avi", "RL.avi", "FL.avi"],
-            "rotate_180_cams": [] # no rotation
+            "rotate_180_cams": [0, 2]
         }
     else:
         return {

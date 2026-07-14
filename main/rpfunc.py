@@ -1020,59 +1020,75 @@ class Replaybackend():
             return Vision_labels, qpixmaps
 
         if sport == 'Squat':
-            vertical_sliders = []
-            horizontal_sliders = []
-            for i in range(num):
-                qpixmap = QtGui.QPixmap()
-                qpixmaps.append(qpixmap)
-                
-                Vision_label = LineLabel(parentlayout)
-                Vision_label.setMinimumSize(labelsize[0], labelsize[1])
-                Vision_label.setMaximumSize(labelsize[0], labelsize[1])
-                Vision_label.setPixmap(qpixmap)
+            if type == 'rc':
+                for _ in range(num):
+                    qpixmap = QtGui.QPixmap()
+                    qpixmaps.append(qpixmap)
+                    Vision_label = QtWidgets.QLabel(parentlayout)
+                    Vision_label.setFrameShape(QtWidgets.QFrame.Panel)
+                    Vision_label.setMinimumSize(int(labelsize[0]), int(labelsize[1]))
+                    Vision_label.setMaximumSize(int(labelsize[0]), int(labelsize[1]))
+                    Vision_label.setPixmap(qpixmap)
+                    Vision_label.setText('')
+                    sublayout.addWidget(Vision_label)
+                    sublayout.setAlignment(Vision_label, QtCore.Qt.AlignCenter)
+                    Vision_labels.append(Vision_label)
+                return Vision_labels, qpixmaps
 
-                vertical_slider = QtWidgets.QSlider(QtCore.Qt.Vertical, parent=parentlayout)
-                horizontal_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal, parent=parentlayout)
-                
-                slider_style = '''
-                    QSlider::groove:vertical { background: #444444; width: 8px; border-radius: 4px; }
-                    QSlider::handle:vertical { background: red; height: 16px; margin: 0 -4px; border-radius: 8px; }
-                    QSlider::groove:horizontal { background: #444444; height: 8px; border-radius: 4px; }
-                    QSlider::handle:horizontal { background: red; width: 16px; margin: -4px 0; border-radius: 8px; }
-                '''
-                vertical_slider.setStyleSheet(slider_style)
-                horizontal_slider.setStyleSheet(slider_style)
+            if type == 'rp':
+                vertical_sliders = []
+                horizontal_sliders = []
+                for i in range(num):
+                    qpixmap = QtGui.QPixmap()
+                    qpixmaps.append(qpixmap)
+                    
+                    Vision_label = LineLabel(parentlayout)
+                    Vision_label.setMinimumSize(int(labelsize[0]), int(labelsize[1]))
+                    Vision_label.setMaximumSize(int(labelsize[0]), int(labelsize[1]))
+                    Vision_label.setPixmap(qpixmap)
 
-                vertical_slider.setFixedHeight(labelsize[1])
-                vertical_slider.setMaximum(labelsize[1])
-                vertical_slider.setInvertedAppearance(True)
-                vertical_slider.setValue(0)
-                vertical_slider.valueChanged.connect(Vision_label.set_horizontal_line)
-                
-                horizontal_slider.setFixedWidth(labelsize[0])
-                horizontal_slider.setMaximum(labelsize[0])
-                horizontal_slider.setValue(0)
-                horizontal_slider.valueChanged.connect(Vision_label.set_vertical_line)
+                    vertical_slider = QtWidgets.QSlider(QtCore.Qt.Vertical, parent=parentlayout)
+                    horizontal_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal, parent=parentlayout)
+                    
+                    slider_style = '''
+                        QSlider::groove:vertical { background: #444444; width: 8px; border-radius: 4px; }
+                        QSlider::handle:vertical { background: red; height: 16px; margin: 0 -4px; border-radius: 8px; }
+                        QSlider::groove:horizontal { background: #444444; height: 8px; border-radius: 4px; }
+                        QSlider::handle:horizontal { background: red; width: 16px; margin: -4px 0; border-radius: 8px; }
+                    '''
+                    vertical_slider.setStyleSheet(slider_style)
+                    horizontal_slider.setStyleSheet(slider_style)
 
-                vis_layout = QtWidgets.QGridLayout()
-                vis_layout.setContentsMargins(0, 0, 0, 0)
-                vis_layout.setSpacing(5)
-                vis_layout.addWidget(Vision_label, 0, 0)
-                vis_layout.addWidget(vertical_slider, 0, 1)
-                vis_layout.addWidget(horizontal_slider, 1, 0, 1, 2)
+                    vertical_slider.setFixedHeight(int(labelsize[1]))
+                    vertical_slider.setMaximum(int(labelsize[1]))
+                    vertical_slider.setInvertedAppearance(True)
+                    vertical_slider.setValue(0)
+                    vertical_slider.valueChanged.connect(Vision_label.set_horizontal_line)
+                    
+                    horizontal_slider.setFixedWidth(int(labelsize[0]))
+                    horizontal_slider.setMaximum(int(labelsize[0]))
+                    horizontal_slider.setValue(0)
+                    horizontal_slider.valueChanged.connect(Vision_label.set_vertical_line)
 
-                temp_widget = QtWidgets.QWidget()
-                temp_widget.setLayout(vis_layout)
+                    vis_layout = QtWidgets.QGridLayout()
+                    vis_layout.setContentsMargins(0, 0, 0, 0)
+                    vis_layout.setSpacing(5)
+                    vis_layout.addWidget(Vision_label, 0, 0)
+                    vis_layout.addWidget(vertical_slider, 0, 1)
+                    vis_layout.addWidget(horizontal_slider, 1, 0, 1, 2)
 
-                if isinstance(sublayout, QtWidgets.QGridLayout):
-                    sublayout.addWidget(temp_widget, 0, i)
-                else:
-                    sublayout.addWidget(temp_widget)
-                sublayout.setAlignment(temp_widget, QtCore.Qt.AlignCenter)
-                Vision_labels.append(Vision_label)
-                vertical_sliders.append(vertical_slider)
-                horizontal_sliders.append(horizontal_slider)
-            return Vision_labels, vertical_sliders, horizontal_sliders, qpixmaps
+                    temp_widget = QtWidgets.QWidget()
+                    temp_widget.setLayout(vis_layout)
+
+                    if isinstance(sublayout, QtWidgets.QGridLayout):
+                        sublayout.addWidget(temp_widget, 0, i)
+                    else:
+                        sublayout.addWidget(temp_widget)
+                    sublayout.setAlignment(temp_widget, QtCore.Qt.AlignCenter)
+                    Vision_labels.append(Vision_label)
+                    vertical_sliders.append(vertical_slider)
+                    horizontal_sliders.append(horizontal_slider)
+                return Vision_labels, vertical_sliders, horizontal_sliders, qpixmaps
         
         if sport == 'Benchpress':
             if type == 'rc':

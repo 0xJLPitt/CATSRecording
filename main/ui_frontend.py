@@ -431,7 +431,7 @@ class Mainwindow(QtWidgets.QMainWindow, Ui_MainWindow):
         elif sport == 'Squat':
             label_size = [480, 640]
             # 影片攤平成三個平行
-            self.head_Vis_label, self.V_sliders, self.H_sliders, _ = self.rpbf.creat_vision_labels_pixmaps([x * 0.95 for x in label_size], self.ui.Replay_tab, self.ui.head_vis_layout, sport, 3)
+            self.head_Vis_label, self.V_sliders, self.H_sliders, _ = self.rpbf.creat_vision_labels_pixmaps([x * 0.95 for x in label_size], self.ui.Replay_tab, self.ui.head_vis_layout, sport, 3, type='rp')
             self.bottom_Vis_labels = []
             
             # 移除右側的資料曲線圖
