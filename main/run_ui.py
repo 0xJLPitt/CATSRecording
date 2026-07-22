@@ -13,6 +13,12 @@ import sys
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
+    
+    # 修正 qt_material 2.17 不支援 PyQt5 導致無法載入 icon 的問題
+    import os
+    from PyQt5.QtCore import QDir
+    QDir.addSearchPath("icon", os.path.join(os.path.expanduser("~"), ".qt_material", "theme"))
+    
     apply_stylesheet(app, theme='dark_amber.xml')
     win = Mainwindow()
     win.showMaximized()

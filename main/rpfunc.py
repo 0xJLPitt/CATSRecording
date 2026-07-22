@@ -408,13 +408,11 @@ class Replaybackend():
     def Benchpress_btn_pressed(
         self, Deadlift_btn, Benchpress_btn, Squat_btn, Play_btn, icons,
         Stop_btn, Frameslider, fast_forward_combobox, File_comboBox, rp_tab, play_layout,
-        head_label, bottom_labels, V_sliders, H_sliders, graph
+        head_label, bottom_labels, graph
         ):
         self.currentsport = 'Benchpress'
-        self.rp_Vision_labels = [head_label] + bottom_labels
+        self.rp_Vision_labels = head_label + bottom_labels
         self.data_graph = graph
-        self.V_sliders = V_sliders
-        self.H_sliders = H_sliders
         self.rp_btn_press(
             self.currentsport, Deadlift_btn, Benchpress_btn, Squat_btn, Play_btn, icons,
             Stop_btn, Frameslider, fast_forward_combobox, File_comboBox, rp_tab, play_layout
@@ -1107,79 +1105,59 @@ class Replaybackend():
                 return Vision_labels, qpixmaps                                                                # 回傳
 
             if type == 'rp':   
-                if num == 1:
-                    vertical_slider = QtWidgets.QSlider(orientation=QtCore.Qt.Vertical, parent=parentlayout)  # 垂直 slider（沿 Y 方向擺放）  #
-                    horizontal_slider = QtWidgets.QSlider(orientation=QtCore.Qt.Horizontal, parent=parentlayout)  # 水平 slider（沿 X 方向擺放）  #
-                    qpixmap = QtGui.QPixmap()                                                                 # 建立空白 QPixmap  #
-                    qpixmaps.append(qpixmap)                                                                  # 收集 pixmap  #
+                vertical_sliders = []
+                horizontal_sliders = []
+                for i in range(num):
+                    qpixmap = QtGui.QPixmap()
+                    qpixmaps.append(qpixmap)
+                    
+                    Vision_label = LineLabel(parentlayout)
+                    Vision_label.setMinimumSize(int(labelsize[0]), int(labelsize[1]))
+                    Vision_label.setMaximumSize(int(labelsize[0]), int(labelsize[1]))
+                    Vision_label.setPixmap(qpixmap)
 
-                    Vision_label = LineLabel(parentlayout)                                                    # 自訂 LineLabel：能畫多條垂直線＋水平線  #
-                    Vision_label.setFrameShape(QtWidgets.QFrame.Panel)                                        # 外框樣式  #
-                    Vision_label.setMinimumSize(labelsize[0], labelsize[1])                                   # 固定大小（寬, 高）  #
-                    Vision_label.setMaximumSize(labelsize[0], labelsize[1])                                   # 固定大小（寬, 高）  #
-                    Vision_label.setPixmap(qpixmap)                                                           # 指定 pixmap  #
+                    vertical_slider = QtWidgets.QSlider(QtCore.Qt.Vertical, parent=parentlayout)
+                    horizontal_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal, parent=parentlayout)
+                    
+                    slider_style = '''
+                        QSlider::groove:vertical { background: #444444; width: 8px; border-radius: 4px; }
+                        QSlider::handle:vertical { background: red; height: 16px; margin: 0 -4px; border-radius: 8px; }
+                        QSlider::groove:horizontal { background: #444444; height: 8px; border-radius: 4px; }
+                        QSlider::handle:horizontal { background: red; width: 16px; margin: -4px 0; border-radius: 8px; }
+                    '''
+                    vertical_slider.setStyleSheet(slider_style)
+                    horizontal_slider.setStyleSheet(slider_style)
 
-                    sublayout.addWidget(Vision_label, 0, 0)                                                   # 影像放左上格  #
-                    sublayout.addWidget(vertical_slider, 0, 1)                                                # 垂直 slider 放影像右側  #
+                    vertical_slider.setFixedHeight(int(labelsize[1]))
+                    vertical_slider.setMaximum(int(labelsize[1]))
+                    vertical_slider.setInvertedAppearance(True)
+                    vertical_slider.setValue(0)
+                    vertical_slider.valueChanged.connect(Vision_label.set_horizontal_line)
+                    
+                    horizontal_slider.setFixedWidth(int(labelsize[0]))
+                    horizontal_slider.setMaximum(int(labelsize[0]))
+                    horizontal_slider.setValue(0)
+                    horizontal_slider.valueChanged.connect(Vision_label.set_vertical_line)
 
-                    horizontal_slider.setFixedWidth(labelsize[0])                                             # 水平 slider 寬度=影像寬  #
-                    horizontal_slider.setValue(0)                                                             # 初值 0  #
-                    horizontal_slider.setMaximum(labelsize[0])                                                # 最大值=影像寬（對應 X）→ 控制「第1條垂直線 X」  #
+                    vis_layout = QtWidgets.QGridLayout()
+                    vis_layout.setContentsMargins(0, 0, 0, 0)
+                    vis_layout.setSpacing(5)
+                    vis_layout.addWidget(Vision_label, 0, 0)
+                    vis_layout.addWidget(vertical_slider, 0, 1)
+                    vis_layout.addWidget(horizontal_slider, 1, 0, 1, 2)
 
-                    vertical_slider.setFixedHeight(labelsize[1])                                              # 垂直 slider 高度=影像高  #
-                    vertical_slider.setMaximum(labelsize[1])                                                  # 最大值=影像高（對應 Y）→ 控制水平線 Y  #
-                    vertical_slider.setInvertedAppearance(True)                                               # 由上往下數值增  #
+                    temp_widget = QtWidgets.QWidget()
+                    temp_widget.setLayout(vis_layout)
 
-                    # === 控制對應 ===
-                    horizontal_slider.valueChanged.connect(Vision_label.set_vertical_line)                    # 水平 slider1 → 垂直線1（X）  #
-                    vertical_slider.setValue(0)                                                               # 初值 0  #
-                    vertical_slider.valueChanged.connect(Vision_label.set_horizontal_line)                    # 垂直 slider → 水平線（Y）  #
-
-                    sublayout.addWidget(horizontal_slider, 1, 0)                                              # 水平 slider1 放影像下方  #
-
-
-
-                    Vision_labels.append(Vision_label)                                                        # 收集 label  #
-                    return Vision_label, vertical_slider, horizontal_slider                                   # 回傳（保持舊介面，避免動到其它呼叫點）  #
-
-
-                        
-                if  num == 2:
-                    for _ in range(num):
-                        # ✅ 創建新元件，避免重複使用舊的
-                        qpixmap = QtGui.QPixmap()
-                        Vision_label = LineLabel(parentlayout)
-                        Vision_label.setMinimumSize(labelsize[0], labelsize[1])
-                        Vision_label.setMaximumSize(labelsize[0], labelsize[1])
-                        Vision_label.setPixmap(qpixmap)
-
-                        vertical_slider = QtWidgets.QSlider(QtCore.Qt.Vertical, parent = parentlayout)
-                        horizontal_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal, parent = parentlayout)
-
-                        vertical_slider.setFixedHeight(labelsize[1])  # 限制垂直 Slider 高度
-                        vertical_slider.setMaximum(labelsize[1])
-                        vertical_slider.setInvertedAppearance(True)
-                        vertical_slider.setValue(0)
-                        vertical_slider.valueChanged.connect(Vision_label.set_horizontal_line)
-                        horizontal_slider.setFixedWidth(labelsize[0])  # 限制水平 Slider 寬度
-                        horizontal_slider.setMaximum(labelsize[0])
-                        horizontal_slider.setValue(0)
-                        horizontal_slider.valueChanged.connect(Vision_label.set_vertical_line)
-
-                        # ✅ 建立 GridLayout
-                        vis_layout = QtWidgets.QGridLayout()
-                        vis_layout.addWidget(Vision_label, 0, 0)
-                        vis_layout.addWidget(vertical_slider, 0, 1)
-                        vis_layout.addWidget(horizontal_slider, 1, 0, 1, 2)
-
-                        # ✅ 包裝 GridLayout 進 QWidget，才能加入 HLayout
-                        temp_widget = QtWidgets.QWidget()
-                        temp_widget.setLayout(vis_layout)
-                        sublayout.addWidget(temp_widget, alignment=QtCore.Qt.AlignCenter)  # 讓 Widget 置中
-                        Vision_labels.append(Vision_label)
-                        vertical_sliders.append(vertical_slider)
-                        horizontal_sliders.append(horizontal_slider)
-                    return Vision_labels, vertical_sliders, horizontal_sliders
+                    if isinstance(sublayout, QtWidgets.QGridLayout):
+                        sublayout.addWidget(temp_widget, 0, i)
+                    else:
+                        sublayout.addWidget(temp_widget)
+                    sublayout.setAlignment(temp_widget, QtCore.Qt.AlignCenter)
+                    Vision_labels.append(Vision_label)
+                    vertical_sliders.append(vertical_slider)
+                    horizontal_sliders.append(horizontal_slider)
+                return Vision_labels, vertical_sliders, horizontal_sliders, qpixmaps
         
     
     def creat_graphic(self, parentlayout, sublayout, size, num):

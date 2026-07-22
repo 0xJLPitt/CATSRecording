@@ -406,27 +406,20 @@ class Mainwindow(QtWidgets.QMainWindow, Ui_MainWindow):
             
         elif sport == 'Benchpress':
             label_size = [640, 480]
-            # 左半邊labels
-            self.ui.head_vis_layout.setContentsMargins(0, 0, 0, 0)
-            self.head_Vis_label, vertical_slider, horizontal_slider = self.rpbf.creat_vision_labels_pixmaps([x * 0.8 for x in label_size], self.ui.Replay_tab, self.ui.head_vis_layout, sport, 1, type = 'rp')
-            self.bottom_Vis_labels, vertical_sliders, horizontal_sliders = self.rpbf.creat_vision_labels_pixmaps([x * 0.55 for x in label_size], self.ui.Replay_tab, self.ui.bottom_vis_layout, sport, 2, type = 'rp')
-            self.V_sliders = vertical_sliders + [vertical_slider]
-            self.H_sliders = horizontal_sliders + [horizontal_slider]
+            # 影片攤平成三個平行
+            self.head_Vis_label, self.V_sliders, self.H_sliders, _ = self.rpbf.creat_vision_labels_pixmaps([x * 0.95 for x in label_size], self.ui.Replay_tab, self.ui.head_vis_layout, sport, 3, type='rp')
+            self.bottom_Vis_labels = []
             
-            # 右半邊labels
-            data_layout = QtWidgets.QFormLayout()
-            self.data_layouts.append(data_layout)
-            graphicview, graphicscene, canvas, axes, table = self.rpbf.creat_graphic(self.ui.Replay_tab, data_layout, (9, 7), 4)
-            self.graph = {'graphicview' : graphicview, 'graphicscene' : graphicscene, 'canvas' : canvas, 'axes' : axes}
-            self.ui.data_ctrl_layout_V.addLayout(data_layout)
+            # 移除右側的資料曲線圖
+            self.graph = None
             
-            self.ui.bottom_vis_layout.setSpacing(10)
-            self.ui.bottom_vis_layout.setContentsMargins(0, 0, 10, 10)
+            self.ui.head_vis_layout.setSpacing(60)
+            self.ui.head_vis_layout.setContentsMargins(10, 0, 10, 0)
                 
             self.rpbf.Benchpress_btn_pressed(
                 self.ui.rp_Deadlift_btn, self.ui.rp_Benchpress_btn, self.ui.rp_Squat_btn, self.ui.Play_btn, self.icons, self.ui.Stop_btn, 
                 self.ui.Frameslider, self.ui.fast_forward_combobox, self.ui.File_comboBox, self.ui.Replay_tab, self.ui.play_layout,
-                self.head_Vis_label, self.bottom_Vis_labels, self.V_sliders, self.H_sliders, self.graph)
+                self.head_Vis_label, self.bottom_Vis_labels, self.graph)
             
         elif sport == 'Squat':
             label_size = [480, 640]
