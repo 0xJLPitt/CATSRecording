@@ -6,6 +6,18 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import os, glob, sys
 
 # frontend logic
+
+class SliderJumpFilter(QtCore.QObject):
+    def eventFilter(self, obj, event):
+        if event.type() == QtCore.QEvent.MouseButtonPress and event.button() == QtCore.Qt.LeftButton:
+            opt = QtWidgets.QStyleOptionSlider()
+            obj.initStyleOption(opt)
+            sr = obj.style().subControlRect(QtWidgets.QStyle.CC_Slider, opt, QtWidgets.QStyle.SC_SliderHandle, obj)
+            if not sr.contains(event.pos()):
+                val = obj.minimum() + ((obj.maximum() - obj.minimum()) * event.pos().x()) / obj.width()
+                obj.setValue(int(val))
+        return super().eventFilter(obj, event)
+
 class Mainwindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def __init__(self, *args, obj=None, **kwargs):
         super(Mainwindow, self).__init__(*args, **kwargs)
@@ -53,8 +65,13 @@ class Mainwindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.ui.Frameslider.sliderPressed.connect(self.rpbf.slider_Pressed)
         self.ui.Frameslider.sliderReleased.connect(self.rpbf.slider_released)
         self.ui.Frameslider.valueChanged.connect(lambda: self.rpbf.slider_changed(self.ui.Frameslider, self.ui.Play_btn, self.icons))
+        self.slider_filter = SliderJumpFilter()
+        self.ui.Frameslider.installEventFilter(self.slider_filter)
         self.ui.search_LineEdit.textChanged.connect(lambda: self.rpbf.search_text_changed(self.ui.File_comboBox, self.ui.search_LineEdit.text()))
         self.ui.data_produce_btn_rp.clicked.connect(lambda: self.rpbf.data_produce_btn_clicked_rp(self.rpbf.currentsport))
+        self.ui.LoopA_btn.clicked.connect(lambda: self.rpbf.set_loop_A(self.ui.Frameslider, self.ui.LoopA_btn))
+        self.ui.LoopB_btn.clicked.connect(lambda: self.rpbf.set_loop_B(self.ui.Frameslider, self.ui.LoopB_btn))
+        self.ui.ClearLoop_btn.clicked.connect(lambda: self.rpbf.clear_loop(self.ui.LoopA_btn, self.ui.LoopB_btn))
         self.ui.replay_layout.addLayout(self.ui.bottom_controls_layout)
 
     def tab_changed(self, index):

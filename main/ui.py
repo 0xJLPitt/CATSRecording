@@ -197,6 +197,24 @@ class Ui_MainWindow(object):
         self.Stop_btn.setEnabled(False)
         self.Stop_btn.setObjectName("Stop_btn")
         self.bottom_controls_layout.addWidget(self.Stop_btn)
+        
+        self.LoopA_btn = QtWidgets.QPushButton()
+        self.LoopA_btn.setEnabled(True)
+        self.LoopA_btn.setObjectName("LoopA_btn")
+        self.LoopA_btn.setMinimumWidth(80)
+        self.bottom_controls_layout.addWidget(self.LoopA_btn)
+
+        self.LoopB_btn = QtWidgets.QPushButton()
+        self.LoopB_btn.setEnabled(True)
+        self.LoopB_btn.setObjectName("LoopB_btn")
+        self.LoopB_btn.setMinimumWidth(80)
+        self.bottom_controls_layout.addWidget(self.LoopB_btn)
+
+        self.ClearLoop_btn = QtWidgets.QPushButton()
+        self.ClearLoop_btn.setEnabled(True)
+        self.ClearLoop_btn.setObjectName("ClearLoop_btn")
+        self.ClearLoop_btn.setMinimumWidth(80)
+        self.bottom_controls_layout.addWidget(self.ClearLoop_btn)
 
         self.TimeCount_LineEdit = QtWidgets.QLineEdit()
         self.TimeCount_LineEdit.setEnabled(True)
@@ -215,6 +233,7 @@ class Ui_MainWindow(object):
         self.fast_forward_combobox.setEnabled(False)
         self.fast_forward_combobox.setObjectName("fast_forward_combobox")
         self.fast_forward_combobox.setEditable(False)
+        self.fast_forward_combobox.setMinimumWidth(100)
         self.fast_forward_combobox.setStyleSheet(f"font-size:{int(20 * CONFIG['ui_scale'])}px; color:yellow;")
 
         self.bottom_controls_layout.addWidget(self.fast_forward_combobox)
@@ -223,8 +242,11 @@ class Ui_MainWindow(object):
         self.bottom_controls_layout.setStretch(0, 0)
         self.bottom_controls_layout.setStretch(1, 0)
         self.bottom_controls_layout.setStretch(2, 0)
-        self.bottom_controls_layout.setStretch(3, 90)
-        self.bottom_controls_layout.setStretch(4, 5)
+        self.bottom_controls_layout.setStretch(3, 0)
+        self.bottom_controls_layout.setStretch(4, 0)
+        self.bottom_controls_layout.setStretch(5, 0)
+        self.bottom_controls_layout.setStretch(6, 90)
+        self.bottom_controls_layout.setStretch(7, 5)
         
         self.tabs.addTab(self.Recording_tab, "Recording")
         self.tabs.addTab(self.Replay_tab, 'replay')
@@ -250,6 +272,9 @@ class Ui_MainWindow(object):
         self.rp_Deadlift_btn.setText(_translate("MainWindow", "Deadlift"))
         self.rp_Benchpress_btn.setText(_translate("MainWindow", "Benchpress"))
         self.rp_Squat_btn.setText(_translate("MainWindow", "Squat"))
+        self.LoopA_btn.setText(_translate("MainWindow", "設為循環 A 點"))
+        self.LoopB_btn.setText(_translate("MainWindow", "設為循環 B 點"))
+        self.ClearLoop_btn.setText(_translate("MainWindow", "清除區間"))
 
     def handle_file_selection_changed(self, text):  # 當 File_comboBox 選項改變
         path = text.strip()  # 取選項文字

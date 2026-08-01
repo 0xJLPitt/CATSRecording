@@ -391,6 +391,41 @@ class Replaybackend():
         self.is_pause = False
         self.exited = False
         self.is_stop = True
+        self.playback_timer = QtCore.QTimer()
+        self.playback_timer.timeout.connect(self.on_playback_timeout)
+        self._frameslider = None
+        self._was_playing = False
+        self.loop_A = None
+        self.loop_B = None
+
+    def set_loop_A(self, Frameslider, LoopA_btn):
+        self.loop_A = Frameslider.value()
+        LoopA_btn.setText(f"A: {self.loop_A}")
+        
+    def set_loop_B(self, Frameslider, LoopB_btn):
+        self.loop_B = Frameslider.value()
+        LoopB_btn.setText(f"B: {self.loop_B}")
+        
+    def clear_loop(self, LoopA_btn, LoopB_btn):
+        self.loop_A = None
+        self.loop_B = None
+        LoopA_btn.setText("設為循環 A 點")
+        LoopB_btn.setText("設為循環 B 點")
+
+    def on_playback_timeout(self):
+        if hasattr(self, "_frameslider") and self._frameslider:
+            val = self._frameslider.value()
+            
+            loop_start = self.loop_A if getattr(self, "loop_A", None) is not None else 0
+            loop_end = self.loop_B if getattr(self, "loop_B", None) is not None else self._frameslider.maximum()
+            
+            if val >= loop_end:
+                if getattr(self, "loop_A", None) is not None or getattr(self, "loop_B", None) is not None:
+                    self._frameslider.setValue(loop_start)
+                else:
+                    self.playback_timer.stop()
+            else:
+                self._frameslider.setValue(val + 1)
 
     def Deadlift_btn_pressed(
         self, Deadlift_btn, Benchpress_btn, Squat_btn, Play_btn, icons,
@@ -587,46 +622,64 @@ class Replaybackend():
                 else:
                     self.caps = []                                                                # 初始化
 
-                # 建立播放 barrier（以可用影片數量為準）
-                self.barrier_play = threading.Barrier(len(valid_videos))                          # 同步點（影片數）
+                # 重建播放（使用 valid_videos）
+                self.videos = valid_videos
+                self.caps = []
+                for i, video in enumerate(self.videos):
+                    cap = cv2.VideoCapture(video)
+                    self.caps.append(cap)
+                
+                # 初始化圖表線條
+                self.graph_lines = []
+                info_count = len(getattr(self, "info_data", []))
+                if getattr(self, "datas", False) and info_count > 0 and getattr(self, "data_graph", None) is not None:
+                    # 清除舊的線條
+                    for ax in self.data_graph['axes']:
+                        ax.lines.clear()
+                    
+                    for i, data in enumerate(self.info_data):
+                        ax = self.data_graph['axes'][i]
+                        x_data = data['frames']
+                        y_data = data['values']
+                        gl = {'is_2d': False, 'x_data': x_data, 'y_data': y_data, 'ax': ax}
+                        
+                        if isinstance(y_data[0], (list, tuple)) and len(y_data[0]) == 2:
+                            gl['right_values'] = [v[0] for v in y_data]
+                            gl['left_values'] = [v[1] for v in y_data]
+                            gl['line1'], = ax.plot([], [], color="blue")
+                            gl['line2'], = ax.plot([], [], color="red")
+                            gl['is_2d'] = True
+                        else:
+                            gl['line'], = ax.plot([], [], color="red")
+                        
+                        ax.set_xlim(min(x_data), max(x_data))
+                        ax.set_ylim(data['y_min'], data['y_max'])
+                        ax.set_ylabel(f"{data['y_label']}")
+                        
+                        # 處理特別的圖表標記 (例如起槓)
+                        if (str(self.currentsport).lower() == 'benchpress' 
+                            and str(data.get('title', '')).lower() == 'bar_position'):
+                            ax.axhspan(280, 330, alpha=0.18, color='orange', zorder=0)
+                            ax.text(0.98, 280, "Top Position", transform=ax.get_yaxis_transform(),
+                                         va='bottom', ha='right', fontsize=20, color="#ff9a3c")
+                                         
+                        self.graph_lines.append(gl)
 
-                # 若有資料曲線要播放，只有在有資料時才建立 barrier
-                info_count = len(getattr(self, "info_data", []))                                  # 資料筆數
-                self.barrier_data = (threading.Barrier(info_count) if info_count > 0 else None)   # 無資料則 None
-
-                # 重建播放 threads（使用 valid_videos）
-                self.threads = []                                                                 # 重建容器
-                self.videos = valid_videos                                                        # 以有效片覆寫
-                self.caps = []                                                                    # 對應 cap 清單
-                for i, video in enumerate(self.videos):                                           # 逐支影片
-                    cap = cv2.VideoCapture(video)                                                 # 重新開檔
-                    self.caps.append(cap)                                                         # 收 cap
-                    thread_play = MyThread(                                                       # 建立播放執行緒
-                        self.caps, i, Play_btn, icons, fast_forward_combobox,                     # 參數同原本
-                        Frameslider, framenumber, self.rp_Vision_labels,                          # 參數同原本
-                        self.rp_qpixmaps, self.barrier_play)                                      # 參數同原本
-                    thread_play.start()                                                           # 啟動
-                    self.threads.append(thread_play)                                              # 收執行緒
-
-                # 建立資料曲線 threads（只有在 self.datas / info_data 有內容時且有圖表時）
-                if getattr(self, "datas", False) and info_count > 0 and getattr(self, "data_graph", None) is not None:                              # 有資料且有圖表才跑
-                    for i, data in enumerate(self.info_data):                                     # 逐筆資料
-                        data_thread = Thread_data(
-                            i, self.data_graph, data, self.barrier_data,
-                            fast_forward_combobox, Frameslider, framenumber,
-                            self.currentsport  # ✅ 傳入當前運動別（Benchpress/Deadlift/Squat）
-                        )
-                        data_thread.start()                                                       # 啟動
-                        self.threads.append(data_thread)                                          # 收執行緒
+                self._frameslider = Frameslider
+                Frameslider.setMaximum(int(framenumber))
+                Frameslider.setValue(0)
+                self.slider_changed(Frameslider, Play_btn, icons)
+                
+                speed_rate = fast_forward_combobox.currentText()
+                spf = 1.0 / 30.0
+                self.playback_timer.start(int((spf / float(speed_rate)) * 1000))
 
             # --- pause 後繼續 ---
             else:
-                print('resume')                                                                   # log
-                for thread in getattr(self, "threads", []):                                       # 逐一喚醒
-                    try:
-                        thread.resume()                                                           # 喚醒執行緒
-                    except Exception as e:
-                        print(f"[Replay] resume 失敗: {e}")                                       # 失敗記錄
+                print('resume')
+                speed_rate = fast_forward_combobox.currentText()
+                spf = 1.0 / 30.0
+                self.playback_timer.start(int((spf / float(speed_rate)) * 1000))
 
         # ======= 進入「暫停」狀態 =======
         else:                                                                                     # 偶數次：暫停
@@ -636,15 +689,13 @@ class Replaybackend():
     def pause_event(self, fast_forward_combobox, Play_btn, icons):
         fast_forward_combobox.setEnabled(True)
         Play_btn.setIcon(icons[1])
-        for thread in self.threads:
-            thread.pause()
+        self.playback_timer.stop()
         
     # threads 全部刪除，重新播放
+    # threads 全部刪除，重新播放
     def del_mythreads(self):
-        if self.threads:
-            for thread in self.threads:
-                thread._stop_event.set()
-            self.threads.clear()
+        if hasattr(self, 'playback_timer'):
+            self.playback_timer.stop()
 
     def tab_changed(self):
         self.del_mythreads()
@@ -652,12 +703,14 @@ class Replaybackend():
         self.index = 0
     
     def slider_released(self):
-        for thread in self.threads:
-            thread.is_slide_end = True
+        if hasattr(self, "_was_playing") and self._was_playing:
+            self.playback_timer.start()
 
     def slider_Pressed(self):
-        for thread in self.threads:
-            thread.is_slide_start = True
+        if hasattr(self, 'playback_timer'):
+            self._was_playing = self.playback_timer.isActive()
+            if self._was_playing:
+                self.playback_timer.stop()
 
     def sliding(self, Frameslider, TimeCount_LineEdit):
         # 控制秒數
@@ -1233,17 +1286,53 @@ class Replaybackend():
 
     def stop(self, Frameslider, Play_btn, icons):
         print('stop')
+        if hasattr(self, 'playback_timer'):
+            self.playback_timer.stop()
         Frameslider.setEnabled(False)
         self.del_mythreads()
         self.is_stop = True
         self.index = 0
         Play_btn.setIcon(icons[1])
         Frameslider.setSliderPosition(0)
+        
+        # Release caps
+        if getattr(self, "caps", None) is not None:
+            for cap in self.caps:
+                cap.release()
+            self.caps.clear()
+            
         self.showprevision()
             
     def slider_changed(self, Frameslider, Play_btn, icons):
         val = Frameslider.value()
-        if val >= Frameslider.maximum():
+        
+        # 1. Update Video Frames
+        if hasattr(self, "caps") and hasattr(self, "rp_Vision_labels"):
+            for i, cap in enumerate(self.caps):
+                if not cap.isOpened(): continue
+                current_frame = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
+                if val != current_frame:
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, val)
+                ret, frame = cap.read()
+                if ret and i < len(self.rp_Vision_labels):
+                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    h, w, ch = frame.shape
+                    qpixmap = QtGui.QPixmap.fromImage(QtGui.QImage(frame_rgb.data, w, h, ch*w, QtGui.QImage.Format_RGB888))
+                    Vision_label = self.rp_Vision_labels[i]
+                    scale_qpixmap = qpixmap.scaled(Vision_label.width(), Vision_label.height(), QtCore.Qt.IgnoreAspectRatio, QtCore.Qt.SmoothTransformation)
+                    Vision_label.setPixmap(scale_qpixmap)
+                    
+        # 2. Update Graph Lines
+        if hasattr(self, "graph_lines") and getattr(self, "data_graph", None):
+            for gl in self.graph_lines:
+                if gl['is_2d']:
+                    gl['line1'].set_data(gl['x_data'][:val], gl['right_values'][:val])
+                    gl['line2'].set_data(gl['x_data'][:val], gl['left_values'][:val])
+                else:
+                    gl['line'].set_data(gl['x_data'][:val], gl['y_data'][:val])
+            self.data_graph['canvas'].draw()
+
+        if Frameslider.maximum() > 0 and val >= Frameslider.maximum():
             self.stop(Frameslider, Play_btn, icons)
             
     def search_text_changed(self, comboBox, filter_text):

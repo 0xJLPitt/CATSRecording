@@ -299,21 +299,21 @@ class Recordingbackend():
     def model_select(self, sport):
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         if sport == 'Deadlift':
-            bar_model = YOLO("./model/squat/yolo_bar_model/best.pt")
+            bar_model = YOLO("./model/best_aug_0730.pt")
             bone_model = YOLO("./model/squat/yolov8_model/yolov8n-pose.pt")
             bar_model.to(device)
             bone_model.to(device)
             return [bar_model, bone_model]
         
         elif sport == 'Squat':
-            bar_model = YOLO("./model/squat/yolo_bar_model/best.pt")
+            bar_model = YOLO("./model/best_aug_0730.pt")
             bone_model = YOLO("./model/squat/yolov8_model/yolov8n-pose.pt")
             bar_model.to(device)
             bone_model.to(device)
             return [bar_model, bone_model]
         
         elif sport =='Benchpress':
-            bar_model = YOLO("./model/benchpress/yolo_bar_model/best.pt")
+            bar_model = YOLO("./model/best_aug_0730.pt")
             body_model = YOLO("./model/benchpress/body_model/top11n.pt")
             head_model = YOLO("./model/benchpress/head_model/yolo11n.pt")
             bar_model.to(device)
