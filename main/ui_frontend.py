@@ -2,6 +2,12 @@ from ui import Ui_MainWindow
 from rcfunc import Recordingbackend
 from rpfunc import Replaybackend
 from app_config import CONFIG
+from ui_theme import (
+    S, BG_BASE, BG_RAISED, BG_SURFACE, CYAN, CYAN_DARK,
+    ORANGE, BLUE, TEXT_BRIGHT, TEXT_DIM, BORDER, BORDER_MID,
+    FONT_UI, FONT_MONO,
+    recording_mode_btn_style, toolbutton_style,
+)
 from PyQt5 import QtCore, QtGui, QtWidgets
 import os, glob, sys
 
@@ -147,7 +153,7 @@ class Mainwindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # set recording layout
         self.ctrl_layout = QtWidgets.QHBoxLayout()
         self.ctrl_layout.setContentsMargins(0, 0, 0, 0)
-        self.ctrl_layout.setSpacing(400)
+        self.ctrl_layout.setSpacing(int(400 * CONFIG['ui_scale']))
         self.ui.recording_layout.addLayout(self.ctrl_layout)
         
         # ▶️ Recording 按鈕
@@ -159,21 +165,21 @@ class Mainwindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.auto_recording_btn = QtWidgets.QPushButton(self.ui.Recording_tab)
         self.auto_recording_btn.setText("AUTO RECORDING")
-        self.auto_recording_btn.setEnabled(False)  
-        self.auto_recording_btn.setStyleSheet(f"font-size: {int(44 * CONFIG['ui_scale'])}px")
-        self.auto_recording_btn.setMinimumSize(int(500 * CONFIG['ui_scale']), int(150 * CONFIG['ui_scale']))
+        self.auto_recording_btn.setEnabled(False)
+        self.auto_recording_btn.setStyleSheet(recording_mode_btn_style(color=TEXT_DIM))
+        self.auto_recording_btn.setMinimumSize(S(500), S(150))
         self.ctrl_layout.addWidget(self.auto_recording_btn)
 
         self.data_produce_btn = QtWidgets.QPushButton(self.ui.Recording_tab)
         self.data_produce_btn.setText("DATA PRODUCE")
-        self.data_produce_btn.setStyleSheet(f"font-size: {int(44 * CONFIG['ui_scale'])}px; color: yellow;")
-        self.data_produce_btn.setMinimumSize(int(500 * CONFIG['ui_scale']), int(150 * CONFIG['ui_scale']))
+        self.data_produce_btn.setStyleSheet(recording_mode_btn_style(color=CYAN))
+        self.data_produce_btn.setMinimumSize(S(500), S(150))
         self.ctrl_layout.addWidget(self.data_produce_btn)
 
         self.source_ctrl_btn = QtWidgets.QPushButton(self.ui.Recording_tab)
         self.source_ctrl_btn.setText("SOURCE CHANGE")
-        self.source_ctrl_btn.setStyleSheet(f"font-size: {int(44 * CONFIG['ui_scale'])}px; color: yellow;")
-        self.source_ctrl_btn.setMinimumSize(int(500 * CONFIG['ui_scale']), int(150 * CONFIG['ui_scale']))
+        self.source_ctrl_btn.setStyleSheet(recording_mode_btn_style(color=ORANGE))
+        self.source_ctrl_btn.setMinimumSize(S(500), S(150))
         self.ctrl_layout.addWidget(self.source_ctrl_btn)
 
         # 🔙 Back 按鈕（順序正確）
@@ -226,7 +232,7 @@ class Mainwindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # set recording layout
         self.ctrl_layout = QtWidgets.QHBoxLayout()
         self.ctrl_layout.setContentsMargins(0, 0, 0, 0)
-        self.ctrl_layout.setSpacing(400)
+        self.ctrl_layout.setSpacing(int(400 * CONFIG['ui_scale']))
         self.ui.recording_layout.addLayout(self.ctrl_layout)
 
         # ▶️ Recording 按鈕
@@ -240,20 +246,20 @@ class Mainwindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.auto_recording_btn = QtWidgets.QPushButton(self.ui.Recording_tab)
         self.auto_recording_btn.setText("AUTO RECORDING")
         self.auto_recording_btn.setEnabled(True)
-        self.auto_recording_btn.setStyleSheet(f"font-size: {int(44 * CONFIG['ui_scale'])}px")
-        self.auto_recording_btn.setMinimumSize(int(500 * CONFIG['ui_scale']), int(150 * CONFIG['ui_scale']))
+        self.auto_recording_btn.setStyleSheet(recording_mode_btn_style(color=ORANGE))
+        self.auto_recording_btn.setMinimumSize(S(500), S(150))
         self.ctrl_layout.addWidget(self.auto_recording_btn)
 
         self.data_produce_btn = QtWidgets.QPushButton(self.ui.Recording_tab)
         self.data_produce_btn.setText("DATA PRODUCE")
-        self.data_produce_btn.setStyleSheet(f"font-size: {int(44 * CONFIG['ui_scale'])}px; color: yellow;")
-        self.data_produce_btn.setMinimumSize(int(500 * CONFIG['ui_scale']), int(150 * CONFIG['ui_scale']))
+        self.data_produce_btn.setStyleSheet(recording_mode_btn_style(color=CYAN))
+        self.data_produce_btn.setMinimumSize(S(500), S(150))
         self.ctrl_layout.addWidget(self.data_produce_btn)
 
         self.source_ctrl_btn = QtWidgets.QPushButton(self.ui.Recording_tab)
         self.source_ctrl_btn.setText("SOURCE CHANGE")
-        self.source_ctrl_btn.setStyleSheet(f"font-size: {int(44 * CONFIG['ui_scale'])}px; color: yellow;")
-        self.source_ctrl_btn.setMinimumSize(int(500 * CONFIG['ui_scale']), int(150 * CONFIG['ui_scale']))
+        self.source_ctrl_btn.setStyleSheet(recording_mode_btn_style(color=ORANGE))
+        self.source_ctrl_btn.setMinimumSize(S(500), S(150))
         self.ctrl_layout.addWidget(self.source_ctrl_btn)
 
         # 🔙 Back 按鈕（順序正確）
@@ -322,7 +328,7 @@ class Mainwindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # set recording layout
         self.ctrl_layout = QtWidgets.QHBoxLayout()
         self.ctrl_layout.setContentsMargins(0, 0, 0, 0)
-        self.ctrl_layout.setSpacing(400)
+        self.ctrl_layout.setSpacing(int(400 * CONFIG['ui_scale']))
         self.ui.recording_layout.addLayout(self.ctrl_layout)
 
         # ▶️ Recording 按鈕
@@ -335,20 +341,20 @@ class Mainwindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.auto_recording_btn = QtWidgets.QPushButton(self.ui.Recording_tab)
         self.auto_recording_btn.setText("AUTO RECORDING")
         self.auto_recording_btn.setEnabled(False)
-        self.auto_recording_btn.setStyleSheet(f"font-size: {int(44 * CONFIG['ui_scale'])}px")
-        self.auto_recording_btn.setMinimumSize(int(500 * CONFIG['ui_scale']), int(150 * CONFIG['ui_scale']))
+        self.auto_recording_btn.setStyleSheet(recording_mode_btn_style(color=TEXT_DIM))
+        self.auto_recording_btn.setMinimumSize(S(500), S(150))
         self.ctrl_layout.addWidget(self.auto_recording_btn)
 
         self.data_produce_btn = QtWidgets.QPushButton(self.ui.Recording_tab)
         self.data_produce_btn.setText("DATA PRODUCE")
-        self.data_produce_btn.setStyleSheet(f"font-size: {int(44 * CONFIG['ui_scale'])}px; color: yellow;")
-        self.data_produce_btn.setMinimumSize(int(500 * CONFIG['ui_scale']), int(150 * CONFIG['ui_scale']))
+        self.data_produce_btn.setStyleSheet(recording_mode_btn_style(color=CYAN))
+        self.data_produce_btn.setMinimumSize(S(500), S(150))
         self.ctrl_layout.addWidget(self.data_produce_btn)
 
         self.source_ctrl_btn = QtWidgets.QPushButton(self.ui.Recording_tab)
         self.source_ctrl_btn.setText("SOURCE CHANGE")
-        self.source_ctrl_btn.setStyleSheet(f"font-size: {int(44 * CONFIG['ui_scale'])}px; color: yellow;")
-        self.source_ctrl_btn.setMinimumSize(int(500 * CONFIG['ui_scale']), int(150 * CONFIG['ui_scale']))
+        self.source_ctrl_btn.setStyleSheet(recording_mode_btn_style(color=ORANGE))
+        self.source_ctrl_btn.setMinimumSize(S(500), S(150))
         self.ctrl_layout.addWidget(self.source_ctrl_btn)
 
         # 🔙 Back 按鈕（順序正確）
@@ -466,15 +472,34 @@ class Mainwindow(QtWidgets.QMainWindow, Ui_MainWindow):
         btn = QtWidgets.QPushButton(parent)
         btn.setObjectName(object_name)
         btn.setText(text)
-        btn.setStyleSheet("""
-            QPushButton {
-                font-size: 24px;
-                color: yellow;
-                border: 2px solid yellow;
-                font-family: 'Times New Roman';
-            }
+        btn.setStyleSheet(f"""
+            QPushButton {{
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 {BG_SURFACE}, stop:0.6 {BG_RAISED}, stop:1 {BG_BASE});
+                color: {TEXT_BRIGHT};
+                font-family: {FONT_UI};
+                font-size: {S(22)}px;
+                font-weight: 800;
+                letter-spacing: 6px;
+                text-transform: uppercase;
+                border: 1px solid {BORDER_MID};
+                border-left: 4px solid {CYAN};
+                border-radius: 10px;
+                padding-left: 28px;
+                text-align: left;
+            }}
+            QPushButton:hover {{
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 {CYAN_DARK}, stop:1 {BG_RAISED});
+                border-left: 4px solid {CYAN};
+                border-color: {CYAN};
+                color: {CYAN};
+            }}
+            QPushButton:pressed {{
+                background: {CYAN_DARK};
+            }}
         """)
-        btn.setFixedSize(int(800 * CONFIG['ui_scale']), int(120 * CONFIG['ui_scale']))
+        btn.setFixedSize(S(800), S(120))
         if callback:
             btn.clicked.connect(callback)
         return btn
